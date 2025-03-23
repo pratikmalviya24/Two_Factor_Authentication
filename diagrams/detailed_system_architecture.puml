@@ -1,0 +1,114 @@
+@startuml DetailedTwoFactorAuthSystem
+
+!define RECTANGLE class
+!define COMPONENT component
+
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam monochrome false
+skinparam shadowing false
+skinparam defaultFontSize 14
+skinparam defaultFontName Arial
+skinparam arrowColor #666666
+skinparam packageBorderColor #999999
+
+title Two-Factor Authentication System Architecture
+
+' Define actors
+actor "User" as user
+actor "Admin" as admin
+
+' Define external systems
+cloud "Internet" as internet {
+  [SMTP Email Server] as email_server
+  [Google reCAPTCHA Service] as recaptcha
+}
+
+' Define system layers
+node "Client Device" as client {
+  [Web Browser] as browser
+}
+
+node "Frontend Server" as frontend_server {
+  package "React Frontend" as frontend {
+    [React Router] as router
+    [Authentication Components] as auth_ui
+    [User Profile Components] as profile_ui
+    [Material UI Library] as mui
+    [Context API] as context
+    [Axios HTTP Client] as axios
+  }
+}
+
+node "Backend Server" as backend_server {
+  package "Spring Boot Backend" as backend {
+    package "Controllers" as controllers {
+      [AuthController] as auth_controller
+      [UserProfileController] as profile_controller
+      [PasswordResetController] as reset_controller
+      [EmailTestController] as email_controller
+    }
+    
+    package "Services" as services {
+      [UserService] as user_service
+      [AuthService] as auth_service
+      [EmailService] as email_service
+      [TOTPService] as totp_service
+    }
+    
+    package "Security" as security {
+      [JWT Filter] as jwt_filter
+      [Authentication Provider] as auth_provider
+      [CORS Configuration] as cors_config
+      [Password Encoder] as password_encoder
+    }
+    
+    package "Data Access" as data_access {
+      [User Repository] as user_repo
+      [TFA Config Repository] as tfa_repo
+      [Password Reset Repository] as reset_repo
+    }
+  }
+}
+
+node "Database Server" as db_server {
+  database "MySQL Database" as mysql {
+    [Users Table] as users_table
+    [TFA_Config Table] as tfa_table
+    [Password_Reset_Tokens Table] as reset_table
+  }
+}
+
+' Define relationships
+user --> browser : interacts with
+browser --> frontend_server : HTTP
+frontend_server --> backend_server : REST API
+backend_server --> db_server : JPA/JDBC
+backend_server --> email_server : SMTP
+frontend_server --> recaptcha : API calls
+
+router --> auth_ui
+router --> profile_ui
+auth_ui --> axios
+profile_ui --> axios
+axios --> auth_controller : HTTP requests
+axios --> profile_controller : HTTP requests
+axios --> reset_controller : HTTP requests
+
+auth_controller --> auth_service
+auth_controller --> totp_service
+profile_controller --> user_service
+reset_controller --> email_service
+reset_controller --> user_service
+
+auth_service --> jwt_filter
+auth_service --> password_encoder
+auth_service --> user_repo
+totp_service --> tfa_repo
+email_service --> email_server
+
+user_repo --> users_table
+tfa_repo --> tfa_table
+reset_repo --> reset_table
+
+@enduml 

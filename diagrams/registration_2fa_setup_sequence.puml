@@ -1,0 +1,199 @@
+@startuml RegistrationAnd2FASetupSequence
+
+skinparam backgroundColor white
+skinparam sequenceArrowThickness 2
+skinparam sequenceParticipantBorderThickness 2
+skinparam sequenceBoxBorderColor #999999
+skinparam sequenceParticipantBorderColor #333333
+skinparam sequenceParticipantBackgroundColor #F0F8FF
+skinparam sequenceActorBorderColor #333333
+skinparam sequenceActorBackgroundColor #FEFECE
+skinparam sequenceLifeLineBorderColor #999999
+
+title User Registration and 2FA Setup Sequence
+
+actor "User" as user
+participant "Frontend\nUI" as frontend
+participant "AuthController" as authController
+participant "UserService" as userService
+participant "EmailService" as emailService
+participant "TOTPService" as totpService
+participant "JWT Provider" as jwtProvider
+database "Database" as db
+participant "Email\nServer" as emailServer
+
+== User Registration ==
+
+user -> frontend : Enter registration details\n(username, email, password)
+activate frontend
+
+frontend -> frontend : Client-side validation
+frontend -> authController : POST /api/auth/register
+activate authController
+
+authController -> authController : Validate reCAPTCHA
+authController -> userService : register(registrationRequest)
+activate userService
+
+userService -> userService : Validate input data
+userService -> userService : Hash password with BCrypt
+userService -> db : Check if username/email exists
+activate db
+db --> userService : Result
+deactivate db
+
+alt Username or Email Already Exists
+    userService --> authController : Error: User already exists
+    authController --> frontend : 400 Bad Request
+    frontend --> user : Display error message
+else User Can Be Created
+    userService -> db : Save new user (enabled=false)
+    activate db
+    db --> userService : User created
+    deactivate db
+    
+    userService -> userService : Generate verification token
+    userService -> db : Save verification token
+    activate db
+    db --> userService : Token saved
+    deactivate db
+    
+    userService --> authController : User created successfully
+    deactivate userService
+    
+    authController -> emailService : sendVerificationEmail(user, token)
+    activate emailService
+    emailService -> emailServer : Send verification email
+    activate emailServer
+    emailServer --> emailService : Email sent
+    deactivate emailServer
+    emailService --> authController : Email sent successfully
+    deactivate emailService
+    
+    authController --> frontend : 201 Created
+    deactivate authController
+    frontend --> user : Display success message & prompt to verify email
+end
+deactivate frontend
+
+== Email Verification ==
+
+user -> frontend : Click verification link in email
+activate frontend
+frontend -> authController : GET /api/auth/verify-email?token=xyz
+activate authController
+
+authController -> userService : verifyEmail(token)
+activate userService
+userService -> db : Find token
+activate db
+db --> userService : Token found
+deactivate db
+
+alt Token Invalid or Expired
+    userService --> authController : Error: Invalid token
+    authController --> frontend : 400 Bad Request
+    frontend --> user : Display error message
+else Token Valid
+    userService -> db : Update user (enabled=true)
+    activate db
+    db --> userService : User updated
+    deactivate db
+    userService --> authController : Email verified
+    deactivate userService
+    
+    authController --> frontend : 200 OK
+    deactivate authController
+    frontend --> user : Display success message & redirect to login
+end
+deactivate frontend
+
+== User Login ==
+
+user -> frontend : Enter login credentials
+activate frontend
+frontend -> authController : POST /api/auth/login
+activate authController
+
+authController -> userService : authenticate(username, password)
+activate userService
+userService -> db : Find user
+activate db
+db --> userService : User found
+deactivate db
+
+userService -> userService : Verify password with BCrypt
+userService --> authController : Authentication successful
+deactivate userService
+
+authController -> db : Check if user has 2FA enabled
+activate db
+db --> authController : 2FA not yet enabled
+deactivate db
+
+authController -> jwtProvider : generateToken(authentication)
+activate jwtProvider
+jwtProvider --> authController : JWT token
+deactivate jwtProvider
+
+authController --> frontend : 200 OK with JWT token
+deactivate authController
+frontend -> frontend : Store JWT token
+frontend --> user : Redirect to Dashboard
+deactivate frontend
+
+== 2FA Setup ==
+
+user -> frontend : Navigate to Security Settings
+activate frontend
+frontend -> authController : POST /api/auth/setup-2fa
+activate authController
+
+authController -> totpService : generateSecret()
+activate totpService
+totpService --> authController : Secret key generated
+deactivate totpService
+
+authController -> totpService : generateQrCodeUrl(user, secret)
+activate totpService
+totpService --> authController : QR code URL
+deactivate totpService
+
+authController --> frontend : 200 OK with secret & QR code URL
+deactivate authController
+
+frontend --> user : Display QR code and setup instructions
+user -> user : Scan QR code with\nauthenticator app
+user -> frontend : Enter verification code
+frontend -> authController : POST /api/auth/verify-2fa-setup
+activate authController
+
+authController -> totpService : validateCode(secret, code)
+activate totpService
+totpService --> authController : Valid code
+deactivate totpService
+
+authController -> totpService : enableTFAForUser(user, secret)
+activate totpService
+totpService -> db : Save TFA configuration
+activate db
+db --> totpService : Configuration saved
+deactivate db
+totpService --> authController : 2FA enabled
+deactivate totpService
+
+authController -> emailService : sendTFAEnabledEmail(user)
+activate emailService
+emailService -> emailServer : Send 2FA enabled notification
+activate emailServer
+emailServer --> emailService : Email sent
+deactivate emailServer
+emailService --> authController : Email sent successfully
+deactivate emailService
+
+authController --> frontend : 200 OK
+deactivate authController
+frontend --> user : Display success message
+deactivate frontend
+
+@enduml 

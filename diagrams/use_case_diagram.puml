@@ -1,0 +1,69 @@
+@startuml TwoFactorAuthUseCaseDiagram
+
+skinparam backgroundColor white
+skinparam usecaseBorderColor #333333
+skinparam usecaseBackgroundColor #F0F8FF
+skinparam actorBorderColor #333333
+skinparam actorBackgroundColor #FEFECE
+skinparam arrowColor #666666
+skinparam packageBorderColor #999999
+
+title Two-Factor Authentication System - Use Case Diagram
+
+' Define actors
+actor "Unregistered User" as unregistered
+actor "Registered User" as registered
+actor "Authenticated User" as authenticated
+actor "Email System" as email
+actor "Google reCAPTCHA" as recaptcha
+
+' Define system boundary
+rectangle "Two-Factor Authentication System" {
+  ' Registration and Authentication
+  usecase "Register Account" as register
+  usecase "Login with Username/Password" as login
+  usecase "Set up Two-Factor Authentication" as setup_2fa
+  usecase "Verify 2FA Code" as verify_2fa
+  usecase "Manage User Profile" as manage_profile
+  
+  ' Password Management
+  usecase "Request Password Reset" as request_reset
+  usecase "Reset Password" as reset_password
+  usecase "Change Password" as change_password
+  
+  ' 2FA Management
+  usecase "Enable/Disable 2FA" as toggle_2fa
+  usecase "Generate QR Code" as generate_qr
+  usecase "Validate 2FA Setup" as validate_2fa
+  
+  ' Security
+  usecase "Verify Email" as verify_email
+  usecase "Verify Human (CAPTCHA)" as verify_captcha
+}
+
+' Define relationships
+unregistered --> register
+register ..> verify_email : <<include>>
+register ..> verify_captcha : <<include>>
+
+registered --> login
+login ..> verify_captcha : <<include>>
+login --> verify_2fa : <<extends>>
+
+authenticated --> manage_profile
+authenticated --> change_password
+authenticated --> setup_2fa
+setup_2fa ..> generate_qr : <<include>>
+setup_2fa ..> validate_2fa : <<include>>
+authenticated --> toggle_2fa
+
+registered --> request_reset
+request_reset ..> verify_email : <<include>>
+registered --> reset_password
+reset_password ..> verify_email : <<include>>
+
+' External actor relationships
+verify_email ..> email : <<communicates>>
+verify_captcha ..> recaptcha : <<communicates>>
+
+@enduml 

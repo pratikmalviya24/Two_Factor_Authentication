@@ -1,147 +1,686 @@
-# Two-Factor Authentication Demo
+# Two-Factor Authentication System: Project Analysis and Design Documentation
 
-This project demonstrates a full-stack implementation of two-factor authentication using Spring Boot and React with TypeScript.
+## Table of Contents
+1. [Project Overview](#project-overview)
+2. [System Architecture](#system-architecture)
+3. [Use Case Analysis](#use-case-analysis)
+4. [Class Structure](#class-structure)
+5. [Sequence Diagrams](#sequence-diagrams)
+6. [Activity Diagrams](#activity-diagrams)
+7. [Entity-Relationship Model](#entity-relationship-model)
+8. [Data Flow Analysis](#data-flow-analysis)
+9. [Component Architecture](#component-architecture)
+10. [Deployment Configuration](#deployment-configuration)
+11. [User Interface Design](#user-interface-design)
+12. [Security Considerations](#security-considerations)
+13. [Team Contributions](#team-contributions)
+14. [Setup Instructions](#setup-instructions)
 
-## Features
+## Project Overview
 
-- User registration and login
-- JWT-based authentication
-- Two-factor authentication using TOTP (Time-based One-Time Password)
-- Material-UI based responsive design
-- TypeScript for type safety
-- Protected routes and API endpoints
-- Error handling and loading states
-- Form validation
+The Two-Factor Authentication (2FA) System is a robust, full-stack application that demonstrates modern security practices through a comprehensive authentication system. It combines traditional username/password authentication with a secondary verification method (Time-based One-Time Passwords or TOTP) to enhance security and protect against unauthorized access.
 
-## Project Structure
+Key technologies utilized include:
+- **Backend**: Spring Boot, Spring Security, Java JWT, Spring Data JPA
+- **Frontend**: React, TypeScript, Material-UI
+- **Database**: MySQL
+- **Containerization**: Docker
+- **Additional Features**: Email verification, Google reCAPTCHA integration, password reset functionality
 
-```
-two-factor-auth/
-├── backend/              # Spring Boot backend
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── java/
-│   │   │   └── resources/
-│   └── pom.xml
-└── frontend/            # React frontend
-    ├── src/
-    │   ├── components/
-    │   ├── context/
-    │   ├── hooks/
-    │   ├── services/
-    │   └── types/
-    ├── package.json
-    └── tsconfig.json
-```
+## System Architecture
 
-## Prerequisites
+This section provides an overview of the system architecture, detailing the components and their interactions.
 
+### High-Level Architecture
+
+![System Architecture Diagram](diagrams/TwoFactorAuthSystem.png)
+
+### Detailed Architecture
+
+![Detailed System Architecture](diagrams/DetailedTwoFactorAuthSystem.png)
+
+### Component Diagram
+
+The component diagram illustrates how the different parts of the system are organized and interact with each other.
+
+![Component Diagram](diagrams/ComponentDiagram.png)
+
+Key components in the architecture:
+
+1. **Frontend Application**
+   - Authentication Module: Handles login, registration, and 2FA verification flows
+   - User Profile Module: Manages user profile information and settings
+   - 2FA Setup Module: Guides users through 2FA enablement and management
+   - Password Reset Module: Facilitates secure password recovery
+
+2. **Backend API Server**
+   - REST Controllers: Expose secure endpoints for client interaction
+   - Service Layer: Implements business logic and security rules
+   - Repository Layer: Abstracts data access operations
+   - Security Layer: Manages JWT authentication and password encoding
+
+3. **Database**
+   - Stores user information, 2FA configurations, and security tokens
+   - Maintains relational integrity between entities
+
+4. **External Systems**
+   - Email Service Provider: Delivers verification and notification emails
+   - Google Authenticator (or compatible TOTP apps): Generates verification codes
+
+This architecture follows a standard n-tier approach with clear separation of concerns, enabling maintainability, scalability, and security best practices.
+
+### Deployment Architecture
+
+The deployment diagram illustrates how the system would be deployed in a production environment with high availability and scalability considerations.
+
+![Deployment Diagram](diagrams/DeploymentDiagram.png)
+
+Key deployment components:
+
+1. **Client Tier**
+   - Web browsers executing the React SPA
+   - CDN for static assets distribution
+
+2. **Web Tier**
+   - NGINX servers hosting the compiled frontend application
+   - Load balancers distributing traffic for high availability
+
+3. **Application Tier**
+   - Clustered API servers running Spring Boot applications
+   - Horizontally scalable for increased traffic demands
+
+4. **Data Tier**
+   - Primary-replica database setup for high availability
+   - Read operations distributed to replicas for better performance
+
+5. **External Services**
+   - Email service for sending verification emails and notifications
+   - Monitoring and logging infrastructure for system observability
+
+This deployment architecture ensures:
+- High availability through redundancy at each tier
+- Scalability through horizontal scaling of stateless components
+- Performance through load distribution and caching
+- Security through network segregation and encrypted communications
+- Observability through comprehensive monitoring and logging
+
+## Use Case Analysis
+
+### Use Case Diagram
+
+![Use Case Diagram](diagrams/TwoFactorAuthUseCaseDiagram.png)
+
+### Primary Use Cases:
+
+1. **User Registration**
+   - **Actor**: Unregistered User
+   - **Description**: New users can create an account by providing email, username, and password
+   - **Preconditions**: User has valid email and satisfies password requirements
+   - **Post-conditions**: User account is created but requires email verification
+   - **Extensions**: Email verification, reCAPTCHA verification
+
+2. **User Authentication**
+   - **Actor**: Registered User
+   - **Description**: Existing users can authenticate using email/password followed by 2FA if enabled
+   - **Preconditions**: User has registered account
+   - **Post-conditions**: User is granted access token after successful verification
+   - **Extensions**: Password recovery, 2FA verification
+
+3. **Two-Factor Setup**
+   - **Actor**: Authenticated User
+   - **Description**: Users can enable, configure or disable 2FA for their accounts
+   - **Preconditions**: User is authenticated
+   - **Post-conditions**: User's 2FA settings are updated
+   - **Extensions**: QR code generation, verification code validation
+
+4. **Password Reset**
+   - **Actor**: Registered User
+   - **Description**: Users can reset password via email verification
+   - **Preconditions**: User has registered email
+   - **Post-conditions**: Password is reset successfully
+   - **Extensions**: Email confirmation, token expiration handling
+
+5. **Profile Management**
+   - **Actor**: Authenticated User
+   - **Description**: Users can view and update their profile information
+   - **Preconditions**: User is authenticated
+   - **Post-conditions**: User profile information is updated
+   - **Extensions**: Email verification for critical changes
+
+### Use Case Relationships:
+
+- **Include Relationships**: Common functionality shared across use cases
+  - Email verification is included in registration and password reset
+  - CAPTCHA verification is included in login and registration to prevent automated attacks
+  - QR code generation and validation are included in 2FA setup
+
+- **Extend Relationships**: Optional functionality that may be part of a use case
+  - 2FA verification extends the login process when 2FA is enabled
+  - Email confirmation extends critical profile changes
+
+- **External Systems**:
+  - Email system handles verification emails and password reset links
+  - Google reCAPTCHA service verifies human users during authentication and registration
+
+## Class Structure
+
+### Class Diagram
+
+The Class Diagram illustrates the object-oriented structure of the Two-Factor Authentication system, including all major classes, their attributes, methods, and relationships.
+
+![Class Diagram](diagrams/TwoFactorAuthClassDiagram.png)
+
+### Key Components:
+
+#### Entity Layer
+- **User**: Core entity representing user credentials and account status
+- **TFAConfig**: Entity that manages user's two-factor authentication settings
+- **PasswordResetToken & EmailVerificationToken**: Security token entities for verification operations
+
+#### Repository Layer
+- Provides data access interfaces for each entity
+- Handles database operations with appropriate return types and transaction management
+
+#### Service Layer
+- **UserService**: Manages user registration, authentication, and profile operations
+- **TFAService**: Handles TFA setup, verification, and management
+- **PasswordResetService & EmailVerificationService**: Manage security token lifecycles
+- **TOTPService**: Implements Time-based One-Time Password algorithm
+- **EmailService**: Handles all notification and verification emails
+
+#### Controller Layer
+- RESTful endpoints for authentication, user management, TFA operations, and security functions
+- Each controller focuses on a specific aspect of the system functionality
+
+#### DTO Layer
+- Request/Response objects that safely transfer data between the client and server
+- Provides validation constraints and ensures clean separation between API and domain model
+
+### Key Design Patterns:
+- **Repository Pattern**: For data access abstraction
+- **Service Layer Pattern**: For business logic encapsulation
+- **DTO Pattern**: For API contract definition and object mapping
+- **Dependency Injection**: For loose coupling between components
+
+This design provides a clean separation of concerns, making the system maintainable, testable, and scalable.
+
+## Sequence Diagrams
+
+The following sequence diagrams illustrate the key dynamic flows within the application.
+
+### 1. User Registration and 2FA Setup
+
+This sequence diagram illustrates the complete flow from user registration to two-factor authentication setup.
+
+![Registration and 2FA Setup Sequence](diagrams/RegistrationAnd2FASetupSequence.png)
+
+**Key Steps:**
+
+1. **User Registration Process**:
+   - User submits registration details
+   - System validates input and checks for existing users
+   - System creates the user account in disabled state
+   - System sends verification email
+   - User receives email and verifies account
+
+2. **Initial Login**:
+   - User logs in with username/password
+   - System verifies credentials and generates JWT token
+   - User is redirected to dashboard
+
+3. **2FA Setup Process**:
+   - User initiates 2FA setup from security settings
+   - System generates secret key and QR code
+   - User scans QR code with authenticator app
+   - User verifies setup by entering a valid code
+   - System enables 2FA for the user's account
+   - System sends confirmation email
+
+---
+
+### 2. Authentication with 2FA
+
+This sequence diagram shows the authentication flow when two-factor authentication is enabled for a user account.
+
+![Authentication Sequence](diagrams/AuthenticationWith2FASequence.png)
+
+**Key Steps:**
+
+1. **Initial Authentication**:
+   - User provides username/password
+   - System validates credentials
+   - System detects 2FA is enabled
+   - System responds with requiresTfa=true
+
+2. **2FA Verification**:
+   - User enters code from authenticator app
+   - System validates the code against user's secret
+   - Upon successful validation, system generates JWT token
+   - User is granted access to the application
+
+3. **Token Usage and Expiration**:
+   - System validates JWT for each protected resource request
+   - When token expires, user is redirected to login
+
+---
+
+### 3. Password Reset Flow
+
+This sequence diagram details the complete password reset process from request to completion.
+
+![Password Reset Sequence](diagrams/PasswordResetSequence.png)
+
+**Key Steps:**
+
+1. **Password Reset Request**:
+   - User initiates password reset by providing email
+   - System generates unique reset token with expiration
+   - System sends email with reset link
+
+2. **Token Validation**:
+   - User clicks reset link in email
+   - System validates reset token (expiry, usage)
+   - User is presented with password reset form
+
+3. **Password Update**:
+   - User provides new password
+   - System validates password requirements
+   - System updates password and invalidates token
+   - System sends confirmation email
+   - User can login with new password
+
+## Activity Diagrams
+
+Activity diagrams illustrate the flow of activities and actions within the system, showing decision points, parallel processes, and alternative paths.
+
+### 1. User Registration Process
+
+This activity diagram shows the complete registration flow including client-side validation, server-side validation, email verification, and the path to a successful account creation.
+
+![Registration Activity Diagram](diagrams/UserRegistrationActivity.png)
+
+**Key Features:**
+- Multiple validation layers (client-side and server-side)
+- Email verification flow
+- Token expiration handling
+- Error handling paths for various scenarios
+- Clear separation between User, Frontend, Backend, and Email Service swimlanes
+
+### 2. Authentication Process with 2FA
+
+This activity diagram details the complete authentication flow, including the additional 2FA verification step when enabled.
+
+![Authentication Activity Diagram](diagrams/AuthenticationActivity.png)
+
+**Key Features:**
+- Account status validation (enabled, email verified)
+- Conditional 2FA verification based on user settings
+- JWT token generation and usage
+- Error handling for each step of the process
+- Logout flow
+- Protected resource access
+
+### 3. Password Reset Process
+
+This activity diagram illustrates the password reset flow from request to completion.
+
+![Password Reset Activity Diagram](diagrams/PasswordResetActivity.png)
+
+**Key Features:**
+- Security measures (not revealing if email exists)
+- Token generation and validation
+- Token expiration and usage state tracking
+- Password validation and update process
+- Email notifications
+- Error handling paths
+
+### 4. Two-Factor Authentication Setup
+
+This activity diagram shows the process of enabling and disabling two-factor authentication.
+
+![2FA Setup Activity Diagram](diagrams/TFASetupActivity.png)
+
+**Key Features:**
+- QR code generation for authenticator apps
+- Verification of setup with authenticator app
+- Backup codes provision
+- 2FA disabling process with security checks
+- Email notifications for security-critical changes
+- Error handling for each step
+
+## Entity-Relationship Model
+
+The Entity-Relationship model illustrates the data structure of the application and the relationships between different entities.
+
+### ER Diagram
+
+![Entity Relationship Diagram](diagrams/EntityRelationshipDiagram.png)
+
+### Database Schema:
+
+#### User Table
+This is the central entity that stores user authentication information.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | BIGINT | Primary key, auto-incremented |
+| username | VARCHAR(50) | Unique username for login |
+| email | VARCHAR(100) | Unique email address for login and notifications |
+| password | VARCHAR(100) | BCrypt-hashed password |
+| enabled | BOOLEAN | Indicates if the account is active |
+| email_verified | BOOLEAN | Indicates if email has been confirmed |
+| created_at | TIMESTAMP | Record creation timestamp |
+| updated_at | TIMESTAMP | Record last update timestamp |
+
+#### TFA_Config Table
+Stores the two-factor authentication configuration for a user.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | BIGINT | Primary key, auto-incremented |
+| user_id | BIGINT | Foreign key to User.id |
+| enabled | BOOLEAN | Indicates if 2FA is active for the user |
+| secret | VARCHAR(100) | TOTP secret key used for code generation |
+| tfa_type | ENUM | Type of 2FA (currently only TOTP) |
+| created_at | TIMESTAMP | Record creation timestamp |
+| updated_at | TIMESTAMP | Record last update timestamp |
+
+#### Password_Reset_Tokens Table
+Stores tokens for password reset requests.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | BIGINT | Primary key, auto-incremented |
+| user_id | BIGINT | Foreign key to User.id |
+| token | VARCHAR(100) | Unique token sent via email |
+| expiry_date | TIMESTAMP | When the token becomes invalid |
+| is_used | BOOLEAN | Indicates if token has been used |
+| created_at | TIMESTAMP | Record creation timestamp |
+
+#### Email_Verification_Tokens Table
+Stores tokens for email verification requests.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | BIGINT | Primary key, auto-incremented |
+| user_id | BIGINT | Foreign key to User.id |
+| token | VARCHAR(100) | Unique token sent via email |
+| expiry_date | TIMESTAMP | When the token becomes invalid |
+| is_used | BOOLEAN | Indicates if token has been used |
+| created_at | TIMESTAMP | Record creation timestamp |
+
+### Entity Relationships:
+
+1. **User to TFAConfig**: One-to-One
+   - A user can have at most one TFA configuration
+   - The configuration references the user through user_id
+
+2. **User to PasswordResetToken**: One-to-Many
+   - A user can have multiple password reset tokens (over time)
+   - Each token is linked to exactly one user
+
+3. **User to EmailVerificationToken**: One-to-Many
+   - A user can have multiple email verification tokens (over time)
+   - Each token is linked to exactly one user
+
+4. **TFAConfig to TFAType**: Many-to-One
+   - Many TFA configurations can use the same TFA type
+   - Currently, only TOTP (Time-based One-Time Password) is supported
+
+## Data Flow Analysis
+
+The data flow diagram illustrates how data moves through the Two-Factor Authentication system, showing the interactions between users, processes, and data stores.
+
+![Data Flow Diagram](diagrams/DataFlowDiagram.png)
+
+### Key Data Flows:
+
+#### User Registration Flow
+1. User submits registration data (username, email, password)
+2. System validates input and checks for existing username/email
+3. User record is created with hashed password
+4. Email verification token is created and stored
+5. Verification email is sent to the user
+6. User confirms email by clicking verification link
+7. System updates user's email verification status
+
+#### Authentication Flow
+1. User submits login credentials (username/email, password)
+2. System validates credentials against stored hash
+3. System checks if 2FA is enabled for the user
+4. If 2FA is enabled, user is prompted for verification code
+5. User submits 2FA code from authenticator app
+6. System validates TOTP code using stored secret
+7. System generates JWT token upon successful authentication
+8. JWT token is returned to the client for subsequent API calls
+
+#### Password Reset Flow
+1. User requests password reset with email address
+2. System generates time-limited reset token
+3. Reset email with secure link is sent to user
+4. User clicks reset link and submits new password
+5. System validates token and updates user password
+6. Reset token is marked as used to prevent reuse
+
+#### 2FA Setup Flow
+1. User initiates 2FA setup from profile settings
+2. System generates TOTP secret key
+3. QR code containing secret is presented to user
+4. User scans QR code with authenticator app
+5. User submits verification code to confirm setup
+6. System enables 2FA for the user account
+
+### Data Transformation Points:
+
+1. **Password Processing**: Plain text passwords are never stored; they are processed using BCrypt algorithm with salt
+2. **Token Generation**: Cryptographically secure random tokens are generated for email verification and password reset
+3. **2FA Secret Generation**: Secure random generators create Base32-encoded TOTP secrets
+4. **JWT Creation**: User identity is transformed into a signed token with claims and expiry
+
+### Data Validation:
+
+- Input validation occurs at both client and server sides
+- Email addresses are validated for format and existence
+- Passwords are checked against complexity requirements
+- TOTP codes are validated against the RFC 6238 algorithm
+- Tokens are checked for validity, expiration, and prior usage
+
+This comprehensive data flow ensures security at each step while maintaining a smooth user experience throughout all authentication processes.
+
+## Testing Strategy
+
+## Component Architecture
+
+### Component Diagram
+
+![Component Diagram](https://i.imgur.com/Bx56LbR.png)
+
+### Key Components:
+
+#### Backend:
+- **Security Module**: JWT filters, authentication providers, CORS configuration
+- **Controller Layer**: REST endpoints for client communication
+- **Service Layer**: Business logic implementation
+- **Repository Layer**: Data access operations
+- **Model Layer**: Entity definitions and DTO objects
+
+#### Frontend:
+- **Authentication Components**: Login, Register, 2FA setup forms
+- **User Profile Components**: Profile management UI
+- **Service Layer**: API communication via Axios
+- **Context Providers**: Global state management
+- **Routing Components**: Protected and public routes
+
+## Deployment Configuration
+
+### Deployment Diagram
+
+![Deployment Diagram](https://i.imgur.com/JlYYhq8.png)
+
+### Deployment Architecture:
+
+The application is containerized using Docker for consistent deployment across environments:
+
+- **Frontend Container**: Nginx serving static React files
+- **Backend Container**: Spring Boot application
+- **Database Container**: MySQL database
+- **Docker Network**: Internal communication between containers
+- **Docker Volumes**: Persistent data storage
+
+### Infrastructure Requirements:
+- Docker and Docker Compose
+- Minimum 2GB RAM, 1 CPU core
+- 10GB storage for containers and database
+- HTTPS capability for production environments
+
+## User Interface Design
+
+### Login Screen with 2FA
+
+![Login UI](https://i.imgur.com/P2jEe9K.png)
+
+### 2FA Setup Screen
+
+![2FA Setup UI](https://i.imgur.com/3xTf8aY.png)
+
+### User Dashboard
+
+![Dashboard UI](https://i.imgur.com/wDcQp7A.png)
+
+### Password Reset Flow
+
+![Password Reset UI](https://i.imgur.com/VthT5V2.png)
+
+## Security Considerations
+
+The application implements several security best practices:
+
+- **Password Security**: Bcrypt hashing with appropriate work factor
+- **Two-Factor Authentication**: TOTP-based second factor using RFC 6238
+- **JWT Authentication**: Short-lived tokens with proper signature validation
+- **HTTPS**: All communications encrypted in transit
+- **Input Validation**: Both client and server-side validation
+- **CORS Policy**: Restricted cross-origin resource sharing
+- **Rate Limiting**: Protection against brute force attacks
+- **reCAPTCHA**: Protection against automated attacks
+- **Email Verification**: Ensuring valid user registration
+- **XSS Protection**: React's built-in protection and proper output encoding
+- **CSRF Protection**: Token-based protection for state-changing operations
+
+## Team Contributions
+
+### Member Contributions:
+
+- **Team Member 1**:
+  - Backend API development
+  - Security implementation (JWT, 2FA)
+  - Database design and implementation
+  
+- **Team Member 2**:
+  - Frontend architecture
+  - UI component development
+  - React state management
+  
+- **Team Member 3**:
+  - Integration testing
+  - Email service implementation
+  - DevOps setup (Docker configuration)
+  
+- **Team Member 4**:
+  - UI/UX design
+  - Documentation
+  - QA testing
+
+## Setup Instructions
+
+### Prerequisites:
 - Java 17 or higher
 - Node.js 14 or higher
-- MySQL 8.0 or higher
+- MySQL 8.0 or higher (or Docker)
 - Maven 3.6 or higher
 
-## Backend Setup
+### Docker Setup (Recommended):
+1. Clone the repository
+2. Configure environment variables in `.env` file (use `.env.example` as template)
+3. Run `docker-compose up -d`
+4. Access the application at `http://localhost:3000`
 
-1. Configure MySQL database:
-```yaml
-spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/two_factor_auth
-    username: your_username
-    password: your_password
-```
+### Manual Setup:
 
-2. Run the backend:
-```bash
-cd backend
-mvn clean install
-mvn spring-boot:run
-```
+#### Backend:
+1. Navigate to `backend` directory
+2. Configure `application.yml` with your database and email credentials
+3. Run `mvn clean install`
+4. Start the application with `mvn spring-boot:run`
 
-The backend will start on `http://localhost:8080`
+#### Frontend:
+1. Navigate to `frontend` directory
+2. Install dependencies with `npm install`
+3. Start development server with `npm start`
 
-## Frontend Setup
+The application will be accessible at `http://localhost:3000` with the API running at `http://localhost:8082/api`.
 
-1. Install dependencies:
-```bash
-cd frontend
-npm install
-```
+## Security Analysis
 
-2. Start the development server:
-```bash
-npm start
-```
+Security is a critical aspect of any authentication system. This section outlines the security considerations, potential threats, and implemented countermeasures in the Two-Factor Authentication system.
 
-The frontend will start on `http://localhost:3000`
+### Security Threat Model
 
-## Testing the Application
+The following diagram illustrates the security threat model, highlighting potential attack vectors and corresponding security controls:
 
-1. Register a new user:
-   - Navigate to `http://localhost:3000/register`
-   - Fill in the registration form
-   - Submit the form
+![Security Threat Model](diagrams/SecurityThreatModel.png)
 
-2. Login:
-   - Navigate to `http://localhost:3000/login`
-   - Enter your credentials
-   - If 2FA is not set up, you'll be redirected to the setup page
+### Key Security Considerations
 
-3. Set up 2FA:
-   - Scan the QR code with an authenticator app (like Google Authenticator)
-   - Enter the verification code from your app
-   - After successful verification, you'll be redirected to the dashboard
+#### Sensitive Assets Protection
+- **User Credentials**: Protected through strong password hashing (BCrypt) and salting
+- **2FA Secret Keys**: Encrypted at rest and never exposed in plaintext to users
+- **Authentication Tokens**: Short-lived JWTs with proper expiry and refresh mechanisms
+- **Personal Data**: Protected through input validation and least privilege access
 
-4. Future logins:
-   - Enter your credentials
-   - Enter the current 2FA code from your authenticator app
-   - Access the dashboard
+#### Threat Mitigation Strategies
+1. **Brute Force Prevention**:
+   - Implement account lockout after multiple failed attempts
+   - Rate limiting on authentication endpoints
+   - CAPTCHA for suspicious login attempts
 
-## Security Features
+2. **MITM Attack Prevention**:
+   - TLS/SSL for all communications
+   - HTTP Strict Transport Security (HSTS)
+   - Certificate pinning for mobile applications
 
-- JWT token authentication
-- TOTP-based two-factor authentication
-- Password hashing using BCrypt
-- Protected API endpoints
-- CORS configuration
-- Form validation
-- Secure session handling
+3. **XSS/CSRF Protection**:
+   - Input validation on all user-supplied data
+   - Content Security Policy (CSP) implementation
+   - Anti-CSRF tokens for state-changing operations
+   - HttpOnly and Secure cookie flags
 
-## API Endpoints
+4. **Injection Prevention**:
+   - Parameterized queries and prepared statements
+   - ORM framework with proper escaping
+   - Input sanitization and validation
 
-### Authentication
-- `POST /api/auth/signup` - Register new user
-- `POST /api/auth/signin` - Login
-- `POST /api/auth/setup-2fa` - Initialize 2FA setup
-- `POST /api/auth/verify-2fa` - Verify 2FA code
+5. **Session Security**:
+   - Short-lived JWT tokens with proper validation
+   - Secure token storage practices
+   - Ability to invalidate sessions remotely
 
-### User
-- `GET /api/auth/profile` - Get user profile (protected)
+6. **Two-Factor Authentication**:
+   - TOTP implementation following RFC 6238
+   - Secret key generation using secure random functions
+   - Rate limiting for verification attempts
+   - Fallback mechanisms and recovery options
 
-## Development
+7. **Privacy Considerations**:
+   - Data minimization principles
+   - Proper user consent collection
+   - Clear privacy policy communication
+   - Data retention policies
 
-### Backend Development
-- Written in Java using Spring Boot
-- Uses JPA for database operations
-- JWT for authentication
-- TOTP for 2FA implementation
+### Security Testing Approach
+- Regular vulnerability scanning and penetration testing
+- Static code analysis to identify security issues
+- Dependency vulnerability checking
+- Security code reviews
 
-### Frontend Development
-- React with TypeScript
-- Material-UI for components
-- Axios for API calls
-- React Router for routing
-- Context API for state management
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+This comprehensive security approach ensures that the Two-Factor Authentication system provides robust protection against common authentication vulnerabilities while maintaining usability for legitimate users.

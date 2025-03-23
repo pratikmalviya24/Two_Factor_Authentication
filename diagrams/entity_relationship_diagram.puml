@@ -1,0 +1,98 @@
+@startuml EntityRelationshipDiagram
+
+!define table(x) entity x << (T,#FFAAAA) >>
+!define primary_key(x) <b><u>x</u></b>
+!define foreign_key(x) <u>x</u>
+!define attribute(x) x
+
+skinparam backgroundColor white
+skinparam entityFontSize 14
+skinparam linetype ortho
+skinparam roundcorner 10
+skinparam classFontStyle bold
+skinparam packageStyle rectangle
+skinparam packageFontSize 14
+
+title Two-Factor Authentication System - Entity Relationship Diagram
+
+'Entities
+table(User) {
+  primary_key(id): BIGINT
+  attribute(username): VARCHAR(50)
+  attribute(email): VARCHAR(100)
+  attribute(password): VARCHAR(100)
+  attribute(enabled): BOOLEAN
+  attribute(email_verified): BOOLEAN
+  attribute(created_at): TIMESTAMP
+  attribute(updated_at): TIMESTAMP
+}
+
+table(TFAConfig) {
+  primary_key(id): BIGINT
+  foreign_key(user_id): BIGINT
+  attribute(enabled): BOOLEAN
+  attribute(secret): VARCHAR(100)
+  attribute(tfa_type): ENUM
+  attribute(created_at): TIMESTAMP
+  attribute(updated_at): TIMESTAMP
+}
+
+table(PasswordResetToken) {
+  primary_key(id): BIGINT
+  foreign_key(user_id): BIGINT
+  attribute(token): VARCHAR(100)
+  attribute(expiry_date): TIMESTAMP
+  attribute(is_used): BOOLEAN
+  attribute(created_at): TIMESTAMP
+}
+
+table(EmailVerificationToken) {
+  primary_key(id): BIGINT
+  foreign_key(user_id): BIGINT
+  attribute(token): VARCHAR(100)
+  attribute(expiry_date): TIMESTAMP
+  attribute(is_used): BOOLEAN
+  attribute(created_at): TIMESTAMP
+}
+
+'Enum
+enum TFAType {
+  TOTP
+}
+
+'Relationships
+User ||--o{ TFAConfig : "has"
+User ||--o{ PasswordResetToken : "has"
+User ||--o{ EmailVerificationToken : "has"
+TFAConfig }o--|| TFAType : "is of"
+
+'Notes
+note bottom of User
+  The central entity that stores user authentication information.
+  - password is stored as a BCrypt hash
+  - enabled indicates if the account is active
+  - email_verified indicates if email has been confirmed
+end note
+
+note bottom of TFAConfig
+  Stores the 2FA configuration for a user.
+  - enabled indicates if 2FA is active
+  - secret is the TOTP secret key
+  - tfa_type indicates which type of 2FA is being used
+end note
+
+note bottom of PasswordResetToken
+  Represents a password reset request.
+  - token is the unique identifier sent via email
+  - expiry_date indicates when the token becomes invalid
+  - is_used indicates if the token has already been used
+end note
+
+note bottom of EmailVerificationToken
+  Represents an email verification request.
+  - token is sent via email for verification
+  - expiry_date indicates when the token becomes invalid
+  - is_used indicates if the token has already been used
+end note
+
+@enduml 

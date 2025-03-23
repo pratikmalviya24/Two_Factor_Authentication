@@ -1,0 +1,119 @@
+@startuml UserRegistrationActivity
+
+skinparam backgroundColor white
+skinparam activityBorderColor #333333
+skinparam activityBackgroundColor #F0F8FF
+skinparam activityDiamondBorderColor #333333
+skinparam activityDiamondBackgroundColor #FEFECE
+skinparam arrowColor #666666
+skinparam swimlaneBorderColor #999999
+skinparam swimlaneTitleFontStyle bold
+
+title User Registration Process - Activity Diagram
+
+|User|
+start
+:Access Registration Page;
+:Enter Registration Details 
+(Username, Email, Password);
+
+|#AntiqueWhite|Frontend|
+:Validate Input Format 
+(Client-side validation);
+
+if (Input Format Valid?) then (yes)
+  :Validate Password Strength;
+  if (Password Meets Requirements?) then (yes)
+    :Validate reCAPTCHA;
+    if (reCAPTCHA Valid?) then (yes)
+      :Send Registration Request to Backend;
+    else (no)
+      :Display reCAPTCHA Error;
+      stop
+    endif
+  else (no)
+    :Display Password Requirements Error;
+    stop
+  endif
+else (no)
+  :Display Format Error;
+  stop
+endif
+
+|#LightBlue|Backend|
+:Receive Registration Request;
+:Validate Request Format;
+
+if (Request Format Valid?) then (yes)
+  :Check if Username or Email Already Exists;
+  
+  if (User Exists?) then (yes)
+    :Return Conflict Error;
+    |Frontend|
+    :Display "Username/Email Already Exists" Error;
+    stop
+  else (no)
+    |Backend|
+    :Hash Password with BCrypt;
+    :Create New User (enabled=false);
+    :Generate Email Verification Token;
+    :Save Verification Token;
+    
+    |#LightGreen|Email Service|
+    :Compose Verification Email;
+    :Send Email with Verification Link;
+    
+    |Backend|
+    :Return Success Response;
+    
+    |Frontend|
+    :Display Registration Success Message;
+    :Prompt User to Check Email;
+    
+    |User|
+    :Receive Verification Email;
+    :Click Verification Link;
+    
+    |Frontend|
+    :Send Verification Token to Backend;
+    
+    |Backend|
+    :Validate Verification Token;
+    
+    if (Token Valid?) then (yes)
+      if (Token Expired?) then (yes)
+        :Return Token Expired Error;
+        |Frontend|
+        :Display "Token Expired" Message;
+        :Offer to Resend Verification Email;
+        stop
+      else (no)
+        |Backend|
+        :Update User (enabled=true);
+        :Set emailVerified=true;
+        :Return Verification Success;
+        
+        |Frontend|
+        :Display Verification Success Message;
+        :Redirect to Login Page;
+        
+        |User|
+        :Proceed to Login;
+        stop
+      endif
+    else (no)
+      |Backend|
+      :Return Invalid Token Error;
+      |Frontend|
+      :Display "Invalid Verification Link" Error;
+      stop
+    endif
+  endif
+else (no)
+  :Return Bad Request Error;
+  |Frontend|
+  :Display Request Error;
+  stop
+endif
+
+@enduml 

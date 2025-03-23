@@ -1,0 +1,164 @@
+@startuml AuthenticationWith2FASequence
+
+skinparam backgroundColor white
+skinparam sequenceArrowThickness 2
+skinparam sequenceParticipantBorderThickness 2
+skinparam sequenceBoxBorderColor #999999
+skinparam sequenceParticipantBorderColor #333333
+skinparam sequenceParticipantBackgroundColor #F0F8FF
+skinparam sequenceActorBorderColor #333333
+skinparam sequenceActorBackgroundColor #FEFECE
+skinparam sequenceLifeLineBorderColor #999999
+
+title Authentication with Two-Factor Authentication Sequence
+
+actor "User" as user
+participant "Frontend\nUI" as frontend
+participant "AuthController" as authController
+participant "UserService" as userService
+participant "TOTPService" as totpService
+participant "TFAConfigRepository" as tfaRepo
+participant "JWT Provider" as jwtProvider
+database "Database" as db
+
+== Initial Login Attempt ==
+
+user -> frontend : Enter login credentials\n(username, password)
+activate frontend
+
+frontend -> frontend : Client-side validation
+frontend -> frontend : Validate reCAPTCHA
+frontend -> authController : POST /api/auth/login
+activate authController
+
+authController -> userService : authenticate(username, password)
+activate userService
+
+userService -> db : Find user by username/email
+activate db
+db --> userService : User found
+deactivate db
+
+userService -> userService : Verify password with BCrypt
+alt Invalid Credentials
+    userService --> authController : Authentication failed
+    authController --> frontend : 401 Unauthorized
+    frontend --> user : Display error message
+else Valid Credentials
+    userService --> authController : Authentication successful
+    deactivate userService
+    
+    authController -> tfaRepo : Check if 2FA is enabled
+    activate tfaRepo
+    tfaRepo -> db : Query TFAConfig
+    activate db
+    db --> tfaRepo : TFAConfig found (enabled=true)
+    deactivate db
+    tfaRepo --> authController : 2FA is enabled
+    deactivate tfaRepo
+    
+    authController --> frontend : 200 OK with requiresTfa=true
+    deactivate authController
+    frontend --> user : Prompt for 2FA code
+end
+deactivate frontend
+
+== Two-Factor Verification ==
+
+user -> user : Get code from\nauthenticator app
+user -> frontend : Enter 2FA code
+activate frontend
+
+frontend -> authController : POST /api/auth/verify-2fa
+activate authController
+
+authController -> userService : getCurrentPreauthenticatedUser()
+activate userService
+userService --> authController : User object
+deactivate userService
+
+authController -> tfaRepo : getTFAConfigForUser(user)
+activate tfaRepo
+tfaRepo -> db : Query TFAConfig
+activate db
+db --> tfaRepo : TFAConfig with secret
+deactivate db
+tfaRepo --> authController : TFA configuration
+deactivate tfaRepo
+
+authController -> totpService : validateCode(secret, code)
+activate totpService
+totpService -> totpService : Generate current valid codes
+totpService -> totpService : Check if input code matches
+alt Invalid 2FA Code
+    totpService --> authController : Invalid code
+    authController --> frontend : 401 Unauthorized
+    frontend --> user : Display error message
+else Valid 2FA Code
+    totpService --> authController : Code validated successfully
+    deactivate totpService
+    
+    authController -> jwtProvider : generateToken(authentication)
+    activate jwtProvider
+    jwtProvider --> authController : JWT token
+    deactivate jwtProvider
+    
+    authController -> userService : getUserProfile(user)
+    activate userService
+    userService --> authController : User profile data
+    deactivate userService
+    
+    authController --> frontend : 200 OK with JWT token and user profile
+    deactivate authController
+    
+    frontend -> frontend : Store JWT token
+    frontend -> frontend : Store user profile data
+    frontend --> user : Redirect to Dashboard
+end
+deactivate frontend
+
+== Subsequent API Calls ==
+
+user -> frontend : Access protected resource
+activate frontend
+
+frontend -> frontend : Add JWT to Authorization header
+frontend -> authController : Request protected resource
+activate authController
+
+authController -> jwtProvider : validateToken(token)
+activate jwtProvider
+jwtProvider -> jwtProvider : Check signature
+jwtProvider -> jwtProvider : Verify not expired
+jwtProvider --> authController : Token valid
+deactivate jwtProvider
+
+authController -> authController : Process request
+authController --> frontend : Response data
+deactivate authController
+
+frontend --> user : Display protected content
+deactivate frontend
+
+== Token Expiration Handling ==
+
+user -> frontend : Access after token expired
+activate frontend
+
+frontend -> authController : Request with expired token
+activate authController
+
+authController -> jwtProvider : validateToken(token)
+activate jwtProvider
+jwtProvider -> jwtProvider : Check expiration
+jwtProvider --> authController : Token expired
+deactivate jwtProvider
+
+authController --> frontend : 401 Unauthorized
+deactivate authController
+
+frontend -> frontend : Clear stored token
+frontend --> user : Redirect to login page
+deactivate frontend
+
+@enduml 

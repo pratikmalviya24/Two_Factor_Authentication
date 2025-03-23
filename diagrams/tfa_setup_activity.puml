@@ -1,0 +1,135 @@
+@startuml TFASetupActivity
+
+skinparam backgroundColor white
+skinparam activityBorderColor #333333
+skinparam activityBackgroundColor #F0F8FF
+skinparam activityDiamondBorderColor #333333
+skinparam activityDiamondBackgroundColor #FEFECE
+skinparam arrowColor #666666
+skinparam swimlaneBorderColor #999999
+skinparam swimlaneTitleFontStyle bold
+
+title Two-Factor Authentication Setup Process - Activity Diagram
+
+|User|
+start
+:Login Successfully;
+:Navigate to Security Settings;
+:Click "Enable 2FA" Button;
+
+|#AntiqueWhite|Frontend|
+:Request 2FA Setup Initialization;
+
+|#LightBlue|Backend|
+:Verify User Authentication;
+:Check if 2FA Already Enabled;
+
+if (Already Enabled?) then (yes)
+  :Return "Already Enabled" Error;
+  |Frontend|
+  :Display "2FA Already Enabled" Message;
+  stop
+else (no)
+  :Generate Secret Key;
+  :Generate QR Code URL;
+  :Return Secret and QR Code URL;
+  
+  |Frontend|
+  :Display QR Code;
+  :Display Manual Entry Key;
+  :Show Setup Instructions;
+  
+  |User|
+  :Open Authenticator App;
+  :Scan QR Code or Enter Key Manually;
+  :Get Verification Code from App;
+  :Enter Verification Code;
+  
+  |Frontend|
+  :Validate Code Format;
+  if (Valid Format?) then (yes)
+    :Send Verification Request;
+  else (no)
+    :Display Format Error;
+    stop
+  endif
+  
+  |Backend|
+  :Retrieve Temporary Secret;
+  :Generate Valid TOTP Codes;
+  :Validate Input Code;
+  
+  if (Code Valid?) then (yes)
+    :Create TFAConfig Record;
+    :Set tfa_enabled = true;
+    :Save Secret Key;
+    :Set TFA Type to TOTP;
+    
+    |#LightGreen|Email Service|
+    :Send 2FA Enabled Notification;
+    
+    |Backend|
+    :Return Success Response;
+    
+    |Frontend|
+    :Display Success Message;
+    :Show Backup Codes;
+    :Recommend Saving Backup Codes;
+    
+    |User|
+    :Save/Print Backup Codes;
+    :Acknowledge Completion;
+    
+    |Frontend|
+    :Navigate to Security Dashboard;
+    :Display 2FA Status as Enabled;
+    stop
+    
+  else (no)
+    :Return Verification Failed Error;
+    |Frontend|
+    :Display "Invalid Code" Error;
+    :Allow Retry;
+    stop
+  endif
+endif
+
+|User|
+:Navigate to Security Settings;
+:Click "Disable 2FA" Button;
+
+|Frontend|
+:Request Password Confirmation;
+
+|User|
+:Enter Password;
+
+|Frontend|
+:Send Disable 2FA Request;
+
+|Backend|
+:Verify Password;
+
+if (Password Valid?) then (yes)
+  :Retrieve TFAConfig;
+  :Set tfa_enabled = false;
+  :Return Success Response;
+  
+  |#LightGreen|Email Service|
+  :Send 2FA Disabled Notification;
+  
+  |Frontend|
+  :Display "2FA Disabled" Message;
+  :Update Security Dashboard;
+  
+  |User|
+  :Acknowledge Change;
+  stop
+else (no)
+  :Return Authentication Error;
+  |Frontend|
+  :Display "Incorrect Password" Error;
+  stop
+endif
+
+@enduml 

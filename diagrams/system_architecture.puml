@@ -1,0 +1,44 @@
+@startuml TwoFactorAuthSystem
+
+' Define components
+package "Presentation Layer" {
+  [React Frontend] as frontend
+  note right of frontend
+    - Authentication Components
+    - User Profile Components
+    - Context Providers
+    - Material UI Components
+    - React Router
+  end note
+}
+
+package "Application Layer" {
+  [Spring Boot Backend] as backend
+  note right of backend
+    - Controllers (Auth, Profile, Reset)
+    - Services (User, Auth, Email, TOTP)
+    - Security (JWT, Authentication)
+    - Repositories
+  end note
+}
+
+package "Data Layer" {
+  database "MySQL Database" as database
+  note right of database
+    - Users Table
+    - TFA Config Table
+    - Password Reset Tokens Table
+  end note
+}
+
+' External Services
+[SMTP Email Server] as email_server
+[Google reCAPTCHA] as recaptcha
+
+' Connections
+frontend --> backend : HTTP/REST API
+backend --> database : JPA/Hibernate
+backend --> email_server : SMTP
+frontend --> recaptcha : Verification
+
+@enduml 

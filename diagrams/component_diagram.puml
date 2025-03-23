@@ -1,0 +1,126 @@
+@startuml ComponentDiagram
+
+' Title of the diagram
+title "Two-Factor Authentication System - Component Diagram"
+
+' Style and theme settings
+skinparam componentStyle uml2
+skinparam backgroundColor white
+skinparam roundcorner 20
+skinparam component {
+  BackgroundColor white
+  BorderColor #3498db
+  ArrowColor #3498db
+}
+
+' Actor definition
+actor "User" as user
+
+' Main components
+component "Frontend Application" as frontend {
+  component "Authentication Module" as frontAuth
+  component "User Profile Module" as frontProfile
+  component "2FA Setup Module" as front2fa
+  component "Password Reset Module" as frontReset
+}
+
+component "Backend API Server" as backend {
+  ' API Controllers layer
+  component "REST Controllers" as controllers {
+    component "Auth Controller" as authController
+    component "User Controller" as userController
+    component "TFA Controller" as tfaController
+    component "Password Reset Controller" as resetController
+  }
+  
+  ' Service layer
+  component "Services" as services {
+    component "User Service" as userService
+    component "TFA Service" as tfaService
+    component "Password Reset Service" as resetService
+    component "Email Service" as emailService
+    component "TOTP Service" as totpService
+  }
+  
+  ' Repository layer
+  component "Repositories" as repositories {
+    component "User Repository" as userRepo
+    component "TFA Config Repository" as tfaRepo
+    component "Token Repositories" as tokenRepo
+  }
+  
+  ' Security components
+  component "Security" as security {
+    component "JWT Authentication" as jwtAuth
+    component "Password Encoder" as passwordEncoder
+  }
+}
+
+database "Database" as db {
+  component "User Table" as userTable
+  component "TFA_Config Table" as tfaTable
+  component "Token Tables" as tokenTables
+}
+
+' External systems
+cloud "Email Service Provider" as emailProvider
+cloud "Google Authenticator" as googleAuth
+
+' Interfaces
+interface "REST API" as api
+interface "JDBC" as jdbc
+interface "SMTP" as smtp
+
+' Relationships
+user --> frontend
+frontend ..> api
+api - backend
+
+' Controller relationships
+controllers ..> services
+
+' Service relationships
+services ..> repositories
+tfaService ..> totpService
+resetService ..> emailService
+
+' Repository relationships
+repositories ..> jdbc
+jdbc - db
+
+' Database relationships
+userTable -- tfaTable
+userTable -- tokenTables
+
+' External system relationships
+emailService ..> smtp
+smtp - emailProvider
+front2fa ..> googleAuth
+
+' Security relationships
+controllers ..> security
+security ..> repositories
+
+' Add notes for clarification
+note right of frontend
+  Single-page application
+  with responsive design
+end note
+
+note right of backend
+  Spring Boot application
+  with JWT authentication
+end note
+
+note right of db
+  PostgreSQL or MySQL
+  with encryption for
+  sensitive data
+end note
+
+note bottom of googleAuth
+  Used by end-users for
+  generating TOTP codes
+end note
+
+@enduml 
