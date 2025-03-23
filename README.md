@@ -9,12 +9,10 @@
 6. [Activity Diagrams](#activity-diagrams)
 7. [Entity-Relationship Model](#entity-relationship-model)
 8. [Data Flow Analysis](#data-flow-analysis)
-9. [Component Architecture](#component-architecture)
-10. [Deployment Configuration](#deployment-configuration)
-11. [User Interface Design](#user-interface-design)
-12. [Security Considerations](#security-considerations)
-13. [Team Contributions](#team-contributions)
-14. [Setup Instructions](#setup-instructions)
+10. [User Interface Design](#user-interface-design)
+11. [Security Considerations](#security-considerations)
+12. [Team Contributions](#team-contributions)
+13. [Setup Instructions](#setup-instructions)
 
 ## Project Overview
 
@@ -486,52 +484,6 @@ The data flow diagram illustrates how data moves through the Two-Factor Authenti
 - Tokens are checked for validity, expiration, and prior usage
 
 This comprehensive data flow ensures security at each step while maintaining a smooth user experience throughout all authentication processes.
-
-## Testing Strategy
-
-## Component Architecture
-
-### Component Diagram
-
-![Component Diagram](https://i.imgur.com/Bx56LbR.png)
-
-### Key Components:
-
-#### Backend:
-- **Security Module**: JWT filters, authentication providers, CORS configuration
-- **Controller Layer**: REST endpoints for client communication
-- **Service Layer**: Business logic implementation
-- **Repository Layer**: Data access operations
-- **Model Layer**: Entity definitions and DTO objects
-
-#### Frontend:
-- **Authentication Components**: Login, Register, 2FA setup forms
-- **User Profile Components**: Profile management UI
-- **Service Layer**: API communication via Axios
-- **Context Providers**: Global state management
-- **Routing Components**: Protected and public routes
-
-## Deployment Configuration
-
-### Deployment Diagram
-
-![Deployment Diagram](https://i.imgur.com/JlYYhq8.png)
-
-### Deployment Architecture:
-
-The application is containerized using Docker for consistent deployment across environments:
-
-- **Frontend Container**: Nginx serving static React files
-- **Backend Container**: Spring Boot application
-- **Database Container**: MySQL database
-- **Docker Network**: Internal communication between containers
-- **Docker Volumes**: Persistent data storage
-
-### Infrastructure Requirements:
-- Docker and Docker Compose
-- Minimum 2GB RAM, 1 CPU core
-- 10GB storage for containers and database
-- HTTPS capability for production environments
 
 ## User Interface Design
 
