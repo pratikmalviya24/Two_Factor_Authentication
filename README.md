@@ -9,10 +9,10 @@
 6. [Activity Diagrams](#activity-diagrams)
 7. [Entity-Relationship Model](#entity-relationship-model)
 8. [Data Flow Analysis](#data-flow-analysis)
-10. [User Interface Design](#user-interface-design)
-11. [Security Considerations](#security-considerations)
-12. [Team Contributions](#team-contributions)
-13. [Setup Instructions](#setup-instructions)
+9. [User Interface Design](#user-interface-design)
+10. [Security Considerations](#security-considerations)
+11. [Team Contributions](#team-contributions)
+12. [Setup Instructions](#setup-instructions)
 
 ## Project Overview
 
@@ -452,21 +452,89 @@ This comprehensive data flow ensures security at each step while maintaining a s
 
 ## User Interface Design
 
-### Login Screen with 2FA
+The Two-Factor Authentication system features a clean, modern UI that prioritizes usability and security. The interface follows a coherent design language with consistent elements across different screens, employing a light blue color scheme that conveys trust and security.
 
-![Login UI](https://i.imgur.com/P2jEe9K.png)
+### Authentication Flow UI
 
-### 2FA Setup Screen
+#### Login Screen
+![Login UI](diagrams/login-screen.png)
 
-![2FA Setup UI](https://i.imgur.com/3xTf8aY.png)
+The login screen features:
+- Simple, focused layout with prominent input fields
+- Clear visual hierarchy guiding users through the login process
+- Visually distinct "Sign In" button with appropriate prominence
+- Password visibility toggle for better usability
+- reCAPTCHA integration for security
+- Helpful links for account creation and password recovery
+- Clean, distraction-free design that focuses on the authentication task
 
-### User Dashboard
+#### Two-Factor Authentication Method Selection
+![2FA Method Selection](diagrams/2fa-method-selection.png)
 
-![Dashboard UI](https://i.imgur.com/wDcQp7A.png)
+The 2FA method selection screen includes:
+- Clear heading indicating the verification purpose
+- Visual representation of different authentication methods
+- Informative descriptions explaining each method's benefits
+- Method cards with distinct visual cues and status indicators
+- Simplified action buttons for quick method selection
+- Feature comparison through intuitive icons and labels
+- Responsive design that adapts to different screen sizes
 
-### Password Reset Flow
+#### Account Creation Flow
+![Account Creation](diagrams/account-creation.png)
 
-![Password Reset UI](https://i.imgur.com/VthT5V2.png)
+The registration process features:
+- Multi-step approach breaking down the registration into manageable segments
+- Progress indicator showing current step in the process
+- Visual cues for password requirements
+- Consistent input styling with appropriate validation feedback
+- Form fields with descriptive labels and placeholder text
+- Clear separation between account information and security setup
+- Responsive design accommodating various screen sizes
+
+### User Profile and Security Management
+
+#### Security Settings Panel
+![Security Settings](diagrams/security-settings.png)
+
+The security settings interface provides:
+- Clearly organized security options in visually distinct cards
+- Two-Factor Authentication status with visual indicators
+- Actionable buttons for security feature management
+- Color-coded sections (green for active, blue for information, red for danger)
+- Confirmation indicators for enabled security features
+- Clear explanatory text for each security option
+- Visually distinct "danger zone" for account deletion
+
+#### Two-Factor Authentication Setup
+![2FA Setup UI](diagrams/2fa-setup.png)
+
+The 2FA setup screen includes:
+- Clear instructions guiding users through the setup process
+- Visual differentiation between enabling and skipping options
+- Educational content explaining the benefits of 2FA
+- Blue shield icon consistently representing security features
+- Clear call-to-action buttons with appropriate visual hierarchy
+- Options to defer setup without sacrificing usability
+
+### Design Principles Applied
+
+1. **Consistency**: The interface maintains consistent visual language, typography, color scheme, and component styling across all screens, creating a unified experience.
+
+2. **Clarity**: Clear, concise instructions and labels guide users through security-critical processes. The UI employs whitespace effectively to avoid overwhelming users with information.
+
+3. **Feedback**: The system provides immediate visual feedback for user actions, clearly indicating success states, validation errors, and progress.
+
+4. **Accessibility**: High contrast text, adequate text sizing, and clear focus states ensure the interface is usable for people with various abilities.
+
+5. **Security-Focused Design**: The UI implements recognized security patterns like masked passwords, clear security status indicators, and confirmation dialogs for critical actions.
+
+6. **Progressive Disclosure**: Complex security features are presented in digestible steps, with additional information revealed progressively to avoid overwhelming users.
+
+7. **Mobile-Friendly**: The responsive design adapts to different screen sizes while maintaining usability and important security elements.
+
+This user interface design ensures that security features remain accessible and understandable to users of varying technical levels, striking a balance between security requirements and usability principles.
+
 
 ## Security Considerations
 
