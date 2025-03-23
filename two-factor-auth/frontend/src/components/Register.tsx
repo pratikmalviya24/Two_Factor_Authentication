@@ -18,7 +18,12 @@ import {
   Fade,
   Grow,
   CircularProgress,
-  Switch
+  Switch,
+  Avatar,
+  StepConnector,
+  stepConnectorClasses,
+  StepIconProps,
+  styled
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useApiError } from '../hooks/useApiError';
@@ -34,7 +39,10 @@ import {
   HowToReg,
   ArrowForward,
   ArrowBack,
-  CheckCircle
+  CheckCircle,
+  AccountCircle,
+  VpnKey,
+  Security
 } from '@mui/icons-material';
 
 interface FormErrors {
@@ -43,6 +51,70 @@ interface FormErrors {
   password?: string;
   confirmPassword?: string;
   captcha?: string;
+}
+
+// Custom Stepper styling
+const ColorlibConnector = styled(StepConnector)(({ theme }) => ({
+  [`&.${stepConnectorClasses.alternativeLabel}`]: {
+    top: 22,
+  },
+  [`&.${stepConnectorClasses.active}`]: {
+    [`& .${stepConnectorClasses.line}`]: {
+      backgroundImage: `linear-gradient(95deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 50%, ${theme.palette.primary.dark} 100%)`,
+    },
+  },
+  [`&.${stepConnectorClasses.completed}`]: {
+    [`& .${stepConnectorClasses.line}`]: {
+      backgroundImage: `linear-gradient(95deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 50%, ${theme.palette.primary.dark} 100%)`,
+    },
+  },
+  [`& .${stepConnectorClasses.line}`]: {
+    height: 3,
+    border: 0,
+    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+    borderRadius: 1,
+  },
+}));
+
+const ColorlibStepIconRoot = styled('div')<{
+  ownerState: { completed?: boolean; active?: boolean };
+}>(({ theme, ownerState }) => ({
+  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+  zIndex: 1,
+  color: theme.palette.primary.main,
+  width: 50,
+  height: 50,
+  display: 'flex',
+  borderRadius: '50%',
+  justifyContent: 'center',
+  alignItems: 'center',
+  transition: 'all 0.3s ease',
+  ...(ownerState.active && {
+    backgroundColor: theme.palette.primary.main,
+    color: theme.palette.primary.contrastText,
+    boxShadow: `0 4px 10px ${alpha(theme.palette.primary.main, 0.4)}`,
+    transform: 'scale(1.1)',
+  }),
+  ...(ownerState.completed && {
+    backgroundColor: theme.palette.primary.dark,
+    color: theme.palette.primary.contrastText,
+  }),
+}));
+
+function ColorlibStepIcon(props: StepIconProps) {
+  const { active, completed, className } = props;
+
+  const icons: { [index: string]: React.ReactElement } = {
+    1: <Person />,
+    2: <Lock />,
+    3: <Security />,
+  };
+
+  return (
+    <ColorlibStepIconRoot ownerState={{ completed, active }} className={className}>
+      {icons[String(props.icon)]}
+    </ColorlibStepIconRoot>
+  );
 }
 
 const Register: React.FC = () => {
@@ -59,7 +131,7 @@ const Register: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const theme = useTheme();
   const [activeStep, setActiveStep] = useState(0);
-  const steps = ['Create Account', 'Security Details', 'Verification'];
+  const steps = ['Account Info', 'Security', 'Verification'];
   const [captchaToken, setCaptchaToken] = useState<string>('');
   // Use Google's special test key for development
   const [siteKey, setSiteKey] = useState<string>('6LeY4_oqAAAAAAbHgvetFulQ-McPyqhCsPjtBtHl');
@@ -256,11 +328,24 @@ const Register: React.FC = () => {
                   ),
                   sx: {
                     borderRadius: 2,
-                    bgcolor: alpha(theme.palette.background.paper, 0.5),
+                    bgcolor: alpha(theme.palette.background.paper, 0.8),
                     '&:hover': {
-                      bgcolor: alpha(theme.palette.background.paper, 0.8)
+                      bgcolor: alpha(theme.palette.background.paper, 1)
                     },
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                  }
+                }}
+                sx={{
+                  mb: 2,
+                  '& .MuiInputLabel-root': {
+                    color: theme.palette.text.secondary
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    '&.Mui-focused fieldset': {
+                      borderColor: theme.palette.primary.main,
+                      borderWidth: 2
+                    }
                   }
                 }}
               />
@@ -285,11 +370,24 @@ const Register: React.FC = () => {
                   ),
                   sx: {
                     borderRadius: 2,
-                    bgcolor: alpha(theme.palette.background.paper, 0.5),
+                    bgcolor: alpha(theme.palette.background.paper, 0.8),
                     '&:hover': {
-                      bgcolor: alpha(theme.palette.background.paper, 0.8)
+                      bgcolor: alpha(theme.palette.background.paper, 1)
                     },
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                  }
+                }}
+                sx={{
+                  mb: 2,
+                  '& .MuiInputLabel-root': {
+                    color: theme.palette.text.secondary
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    '&.Mui-focused fieldset': {
+                      borderColor: theme.palette.primary.main,
+                      borderWidth: 2
+                    }
                   }
                 }}
               />
@@ -333,11 +431,24 @@ const Register: React.FC = () => {
                   ),
                   sx: {
                     borderRadius: 2,
-                    bgcolor: alpha(theme.palette.background.paper, 0.5),
+                    bgcolor: alpha(theme.palette.background.paper, 0.8),
                     '&:hover': {
-                      bgcolor: alpha(theme.palette.background.paper, 0.8)
+                      bgcolor: alpha(theme.palette.background.paper, 1)
                     },
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                  }
+                }}
+                sx={{
+                  mb: 2,
+                  '& .MuiInputLabel-root': {
+                    color: theme.palette.text.secondary
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    '&.Mui-focused fieldset': {
+                      borderColor: theme.palette.primary.main,
+                      borderWidth: 2
+                    }
                   }
                 }}
               />
@@ -374,14 +485,48 @@ const Register: React.FC = () => {
                   ),
                   sx: {
                     borderRadius: 2,
-                    bgcolor: alpha(theme.palette.background.paper, 0.5),
+                    bgcolor: alpha(theme.palette.background.paper, 0.8),
                     '&:hover': {
-                      bgcolor: alpha(theme.palette.background.paper, 0.8)
+                      bgcolor: alpha(theme.palette.background.paper, 1)
                     },
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                  }
+                }}
+                sx={{
+                  mb: 2,
+                  '& .MuiInputLabel-root': {
+                    color: theme.palette.text.secondary
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    '&.Mui-focused fieldset': {
+                      borderColor: theme.palette.primary.main,
+                      borderWidth: 2
+                    }
                   }
                 }}
               />
+              
+              <Box sx={{ 
+                mt: 1,
+                p: 2, 
+                borderRadius: 2, 
+                bgcolor: alpha(theme.palette.info.main, 0.08),
+                border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`
+              }}>
+                <Typography variant="subtitle2" color="info.main" fontWeight={600} sx={{ mb: 1 }}>
+                  Password Tips:
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                  • Use at least 8 characters
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                  • Include uppercase and lowercase letters
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  • Include numbers and special characters
+                </Typography>
+              </Box>
             </Box>
           </Fade>
         );
@@ -389,11 +534,11 @@ const Register: React.FC = () => {
         return (
           <Fade in={activeStep === 2} timeout={500}>
             <Box>
-              <Typography variant="h6" sx={{ my: 2, textAlign: 'center' }}>
-                Complete CAPTCHA Verification
+              <Typography variant="h6" sx={{ mb: 3, textAlign: 'center', fontWeight: 600 }}>
+                Complete Security Verification
               </Typography>
               
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
                 {siteKey && (
                   <ReCAPTCHA
                     ref={recaptchaRef}
@@ -404,19 +549,40 @@ const Register: React.FC = () => {
               </Box>
               
               {formErrors.captcha && (
-                <Alert severity="error" sx={{ mt: 2 }}>
+                <Alert severity="error" variant="filled" sx={{ mt: 2, borderRadius: 2 }}>
                   {formErrors.captcha}
                 </Alert>
               )}
               
+              <Box 
+                sx={{ 
+                  mt: 3, 
+                  p: 2, 
+                  borderRadius: 2, 
+                  bgcolor: alpha(theme.palette.success.main, 0.08),
+                  border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+                  display: captchaToken ? 'flex' : 'none',
+                  alignItems: 'center',
+                  gap: 1.5
+                }}
+              >
+                <CheckCircle color="success" />
+                <Typography variant="body2" color="success.dark" fontWeight={500}>
+                  CAPTCHA verification complete. Ready to create your account!
+                </Typography>
+              </Box>
+              
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
                 <Button
                   onClick={handleBack}
+                  color="inherit"
                   sx={{
                     textTransform: 'none',
                     fontWeight: 600,
-                    borderRadius: 6,
-                    px: 4
+                    borderRadius: 8,
+                    px: 4,
+                    py: 1.2,
+                    border: `1px solid ${alpha(theme.palette.text.primary, 0.2)}`
                   }}
                   startIcon={<ArrowBack />}
                 >
@@ -429,13 +595,21 @@ const Register: React.FC = () => {
                   disabled={loading || !captchaToken}
                   sx={{
                     textTransform: 'none',
-                    fontWeight: 600,
-                    borderRadius: 6,
-                    px: 4
+                    fontWeight: 700,
+                    borderRadius: 8,
+                    px: 4,
+                    py: 1.2,
+                    background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                    boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.5)}`,
+                    '&:hover': {
+                      boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.6)}`,
+                      transform: 'translateY(-2px)'
+                    },
+                    transition: 'all 0.3s ease'
                   }}
                   endIcon={loading ? <CircularProgress size={20} color="inherit" /> : <HowToReg />}
                 >
-                  Register
+                  Create Account
                 </Button>
               </Box>
             </Box>
@@ -454,24 +628,41 @@ const Register: React.FC = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.dark, 0.2)} 0%, ${alpha(theme.palette.primary.main, 0.1)} 100%)`,
+        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.dark, 0.3)} 0%, ${alpha(theme.palette.primary.light, 0.1)} 100%)`,
         position: 'relative',
         overflow: 'hidden',
         pt: 4,
         pb: 8
       }}
     >
-      {/* Background elements */}
+      {/* Enhanced background elements */}
       <Box
         sx={{
           position: 'absolute',
-          width: '400px',
-          height: '400px',
+          width: '600px',
+          height: '600px',
           borderRadius: '50%',
           background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.2)} 0%, rgba(0,0,0,0) 70%)`,
-          top: '-100px',
-          right: '-100px',
-          zIndex: 0
+          top: '-200px',
+          right: '-200px',
+          zIndex: 0,
+          filter: 'blur(40px)',
+          opacity: 0.8
+        }}
+      />
+      
+      <Box
+        sx={{
+          position: 'absolute',
+          width: '500px',
+          height: '500px',
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${alpha(theme.palette.secondary.main, 0.15)} 0%, rgba(0,0,0,0) 70%)`,
+          bottom: '-150px',
+          left: '-150px',
+          zIndex: 0,
+          filter: 'blur(30px)',
+          opacity: 0.7
         }}
       />
       
@@ -481,10 +672,12 @@ const Register: React.FC = () => {
           width: '300px',
           height: '300px',
           borderRadius: '50%',
-          background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.15)} 0%, rgba(0,0,0,0) 70%)`,
-          bottom: '-50px',
-          left: '-50px',
-          zIndex: 0
+          background: `radial-gradient(circle, ${alpha(theme.palette.primary.dark, 0.1)} 0%, rgba(0,0,0,0) 70%)`,
+          top: '30%',
+          left: '10%',
+          zIndex: 0,
+          filter: 'blur(20px)',
+          opacity: 0.5
         }}
       />
 
@@ -492,67 +685,81 @@ const Register: React.FC = () => {
         <Container component="main" maxWidth="xs" sx={{ position: 'relative', zIndex: 1 }}>
           <Grow in={true} timeout={800} style={{ transformOrigin: '50% 0%' }}>
             <Paper
-              elevation={10}
+              elevation={16}
               sx={{
                 p: 4,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                borderRadius: 3,
-                background: 'rgba(255, 255, 255, 0.8)',
+                borderRadius: 4,
+                background: 'rgba(255, 255, 255, 0.9)',
                 backdropFilter: 'blur(10px)',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
+                boxShadow: '0 10px 40px rgba(0,0,0,0.15)'
               }}
             >
-              <Box
+              <Avatar
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  bgcolor: alpha(theme.palette.primary.main, 0.1),
-                  p: 2,
-                  borderRadius: '50%',
-                  mb: 2
+                  width: 80,
+                  height: 80,
+                  bgcolor: theme.palette.primary.main,
+                  boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.4)}`,
+                  mb: 3,
+                  transform: 'translateY(-60%)',
+                  position: 'absolute',
+                  border: `4px solid ${theme.palette.background.paper}`
                 }}
               >
-                <HowToReg sx={{ fontSize: 40, color: theme.palette.primary.main }} />
+                <AccountCircle sx={{ fontSize: 40 }} />
+              </Avatar>
+
+              <Box sx={{ mt: 5, width: '100%', textAlign: 'center' }}>
+                <Typography
+                  component="h1"
+                  variant="h4"
+                  fontWeight="800"
+                  sx={{
+                    background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    MozBackgroundClip: 'text',
+                    MozTextFillColor: 'transparent',
+                    msBackgroundClip: 'text',
+                    color: 'transparent',
+                    textShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`,
+                    mb: 1
+                  }}
+                >
+                  Create Account
+                </Typography>
+
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 3 }}
+                >
+                  Sign up to get started with secure authentication
+                </Typography>
               </Box>
 
-              <Typography
-                component="h1"
-                variant="h4"
-                fontWeight="700"
-                sx={{
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  MozBackgroundClip: 'text',
-                  MozTextFillColor: 'transparent',
-                  msBackgroundClip: 'text',
-                  color: 'transparent',
-                  mb: 0.5
-                }}
+              <Stepper 
+                activeStep={activeStep} 
+                alternativeLabel 
+                connector={<ColorlibConnector />}
+                sx={{ width: '100%', mb: 4 }}
               >
-                Create Account
-              </Typography>
-
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: 'center' }}>
-                Complete the steps to create your secure account
-              </Typography>
-
-              <Stepper activeStep={activeStep} sx={{ width: '100%', mb: 4 }}>
                 {steps.map((label) => (
                   <Step key={label}>
-                    <StepLabel>{label}</StepLabel>
+                    <StepLabel StepIconComponent={ColorlibStepIcon}>{label}</StepLabel>
                   </Step>
                 ))}
               </Stepper>
 
               <Fade in={!!error} timeout={500}>
-                <Box sx={{ mb: 2, width: '100%', display: error ? 'block' : 'none' }}>
+                <Box sx={{ mb: 3, width: '100%', display: error ? 'block' : 'none' }}>
                   <Alert 
                     severity="error" 
+                    variant="filled"
                     sx={{ 
                       borderRadius: 2,
                       animation: 'shake 0.5s ease-in-out',
@@ -568,7 +775,7 @@ const Register: React.FC = () => {
                 </Box>
               </Fade>
 
-              <Box sx={{ mt: 2, width: '100%' }}>
+              <Box sx={{ mt: 1, width: '100%' }}>
                 {renderStepContent(activeStep)}
               </Box>
 
@@ -577,12 +784,15 @@ const Register: React.FC = () => {
                   <Button
                     onClick={handleBack}
                     disabled={activeStep === 0}
+                    color="inherit"
                     sx={{
                       visibility: activeStep === 0 ? 'hidden' : 'visible',
                       textTransform: 'none',
                       fontWeight: 600,
-                      borderRadius: 6,
-                      px: 4
+                      borderRadius: 8,
+                      px: 3,
+                      py: 1.2,
+                      border: `1px solid ${alpha(theme.palette.text.primary, 0.2)}`
                     }}
                     startIcon={<ArrowBack />}
                   >
@@ -594,8 +804,16 @@ const Register: React.FC = () => {
                     sx={{
                       textTransform: 'none',
                       fontWeight: 600,
-                      borderRadius: 6,
-                      px: 4
+                      borderRadius: 8,
+                      px: 3,
+                      py: 1.2,
+                      background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                      boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
+                      '&:hover': {
+                        boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.4)}`,
+                        transform: 'translateY(-2px)'
+                      },
+                      transition: 'all 0.3s ease'
                     }}
                     endIcon={<ArrowForward />}
                   >
@@ -604,13 +822,25 @@ const Register: React.FC = () => {
                 </Box>
               )}
 
-              <Box sx={{ mt: 3, textAlign: 'center' }}>
-                <Typography variant="body2" color="text.secondary">
-                  Already have an account?{' '}
-                  <Link href="/login" underline="hover" fontWeight="600" color="primary.main">
-                    Sign In
-                  </Link>
+              <Box sx={{ mt: 4, textAlign: 'center' }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Already have an account?
                 </Typography>
+                <Link 
+                  href="/login" 
+                  underline="hover" 
+                  fontWeight="700" 
+                  color="primary.main"
+                  sx={{
+                    textDecoration: 'none',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      color: theme.palette.primary.dark
+                    }
+                  }}
+                >
+                  Sign In
+                </Link>
               </Box>
             </Paper>
           </Grow>
