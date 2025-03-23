@@ -11,9 +11,13 @@ import {
   Alert, 
   IconButton,
   InputAdornment,
-  Fade
+  Fade,
+  Grow,
+  useTheme,
+  alpha,
+  Avatar
 } from '@mui/material';
-import { Visibility, VisibilityOff, LockReset } from '@mui/icons-material';
+import { Visibility, VisibilityOff, LockReset, Key, CheckCircle } from '@mui/icons-material';
 import apiService from '../services/api';
 
 const ResetPassword = () => {
@@ -26,8 +30,10 @@ const ResetPassword = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const theme = useTheme();
 
   // Extract token from URL query parameters
   useEffect(() => {
@@ -103,159 +109,359 @@ const ResetPassword = () => {
     setShowPassword(!showPassword);
   };
 
-  if (validating) {
-    return (
-      <Container maxWidth="sm" sx={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        flexDirection: 'column', 
-        justifyContent: 'center',
-        alignItems: 'center',
-        py: 5 
-      }}>
-        <CircularProgress size={60} />
-        <Typography variant="h6" mt={3}>
-          Validating your reset token...
-        </Typography>
-      </Container>
-    );
-  }
-
-  if (!isTokenValid && !validating) {
-    return (
-      <Container maxWidth="sm" sx={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        flexDirection: 'column', 
-        justifyContent: 'center',
-        py: 5 
-      }}>
-        <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error || 'Invalid or expired password reset token'}
-          </Alert>
-          <Typography variant="body1" gutterBottom>
-            The password reset link is invalid or has expired. Please request a new password reset link.
-          </Typography>
-          <Button
-            variant="contained"
-            onClick={() => navigate('/login')}
-            fullWidth
-            sx={{ mt: 2 }}
-          >
-            Back to Login
-          </Button>
-        </Paper>
-      </Container>
-    );
-  }
+  const toggleShowConfirmPassword = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
 
   return (
-    <Container maxWidth="sm" sx={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      flexDirection: 'column', 
-      justifyContent: 'center',
-      py: 5 
-    }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.dark, 0.2)} 0%, ${alpha(theme.palette.primary.main, 0.1)} 100%)`,
+        position: 'relative',
+        overflow: 'hidden',
+        py: 5
+      }}
+    >
+      {/* Decorative background elements */}
+      <Box
+        sx={{
+          position: 'absolute',
+          width: '500px',
+          height: '500px',
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.15)} 0%, rgba(0,0,0,0) 70%)`,
+          top: '-200px',
+          right: '-100px',
+          zIndex: 0
+        }}
+      />
+      
+      <Box
+        sx={{
+          position: 'absolute',
+          width: '400px',
+          height: '400px',
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.1)} 0%, rgba(0,0,0,0) 70%)`,
+          bottom: '-100px',
+          left: '-100px',
+          zIndex: 0
+        }}
+      />
+
       <Fade in={true} timeout={800}>
-        <Paper elevation={3} sx={{ 
-          p: 4, 
-          borderRadius: 3,
-          boxShadow: '0 10px 40px rgba(0,0,0,0.1)'
-        }}>
-          {success ? (
-            <Box sx={{ textAlign: 'center' }}>
-              <LockReset sx={{ fontSize: 60, color: 'success.main', mb: 2 }} />
-              <Typography variant="h5" gutterBottom>
-                Password Reset Successful!
-              </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                Your password has been updated. You will be redirected to the login page shortly.
-              </Typography>
-              <Button
-                variant="contained"
-                onClick={() => navigate('/login')}
-                fullWidth
-              >
-                Go to Login
-              </Button>
-            </Box>
-          ) : (
-            <>
-              <Box sx={{ mb: 3, textAlign: 'center' }}>
-                <Typography variant="h5" component="h1" gutterBottom fontWeight="600">
-                  Reset Your Password
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Please enter your new password below
-                </Typography>
-              </Box>
-
-              {error && (
-                <Alert severity="error" sx={{ mb: 3 }}>
-                  {error}
-                </Alert>
-              )}
-
-              <form onSubmit={handleSubmit}>
-                <TextField
-                  label="New Password"
-                  type={showPassword ? "text" : "password"}
-                  fullWidth
-                  margin="normal"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton onClick={toggleShowPassword} edge="end">
-                          {showPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
+        <Container component="main" maxWidth="sm" sx={{ position: 'relative', zIndex: 1 }}>
+          <Grow in={true} timeout={800} style={{ transformOrigin: '50% 0%' }}>
+            <Paper 
+              elevation={10} 
+              sx={{ 
+                p: { xs: 3, sm: 4 }, 
+                borderRadius: 3,
+                background: 'rgba(255, 255, 255, 0.8)',
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
+              }}
+            >
+              {validating ? (
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center',
+                  py: 4
+                }}>
+                  <CircularProgress size={60} sx={{ mb: 3 }} />
+                  <Typography variant="h6" sx={{ 
+                    fontWeight: 'medium',
+                    color: 'text.secondary'
+                  }}>
+                    Validating your reset token...
+                  </Typography>
+                </Box>
+              ) : !isTokenValid ? (
+                <>
+                  <Box 
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      bgcolor: alpha(theme.palette.error.main, 0.1),
+                      p: 2,
+                      borderRadius: '50%',
+                      mb: 3
+                    }}
+                  >
+                    <LockReset sx={{ fontSize: 40, color: theme.palette.error.main }} />
+                  </Box>
                 
-                <TextField
-                  label="Confirm New Password"
-                  type={showPassword ? "text" : "password"}
-                  fullWidth
-                  margin="normal"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton onClick={toggleShowPassword} edge="end">
-                          {showPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-
-                <Button
-                  type="submit"
-                  variant="contained"
-                  fullWidth
-                  disabled={loading}
-                  sx={{ 
-                    mt: 3, 
-                    py: 1.5,
-                    borderRadius: 2,
-                    boxShadow: '0 4px 12px rgba(63, 81, 181, 0.2)',
-                    background: 'linear-gradient(45deg, #3f51b5 30%, #5677fc 90%)',
-                  }}
-                >
-                  {loading ? <CircularProgress size={24} /> : "Reset Password"}
-                </Button>
-              </form>
-            </>
-          )}
-        </Paper>
+                  <Typography 
+                    variant="h5" 
+                    textAlign="center" 
+                    fontWeight="700" 
+                    mb={3}
+                    sx={{
+                      background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error.dark} 100%)`,
+                      backgroundClip: 'text',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                    }}
+                  >
+                    Invalid Reset Link
+                  </Typography>
+                
+                  <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                    {error || 'Invalid or expired password reset token'}
+                  </Alert>
+                
+                  <Typography variant="body1" gutterBottom textAlign="center" mb={3}>
+                    The password reset link is invalid or has expired. Please request a new password reset link.
+                  </Typography>
+                
+                  <Button
+                    variant="contained"
+                    onClick={() => navigate('/login')}
+                    fullWidth
+                    disableElevation
+                    sx={{ 
+                      mt: 2, 
+                      py: 1.5,
+                      borderRadius: 3,
+                      textTransform: 'none',
+                      fontWeight: 'bold',
+                      boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                      background: `linear-gradient(135deg, ${theme.palette.primary.main} 30%, ${theme.palette.primary.dark} 90%)`,
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-3px)',
+                        boxShadow: '0 12px 20px rgba(0,0,0,0.15)',
+                      },
+                    }}
+                  >
+                    Back to Login
+                  </Button>
+                </>
+              ) : success ? (
+                <Box sx={{ textAlign: 'center', py: 2 }}>
+                  <Box 
+                    sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'center',
+                      mb: 3 
+                    }}
+                  >
+                    <Avatar
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        bgcolor: alpha(theme.palette.success.main, 0.1),
+                        color: theme.palette.success.main,
+                      }}
+                    >
+                      <CheckCircle sx={{ fontSize: 50 }} />
+                    </Avatar>
+                  </Box>
+                  
+                  <Typography 
+                    variant="h5" 
+                    gutterBottom 
+                    fontWeight="700"
+                    sx={{
+                      background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
+                      backgroundClip: 'text',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      mb: 2
+                    }}
+                  >
+                    Password Reset Successful!
+                  </Typography>
+                  
+                  <Typography variant="body1" paragraph sx={{ maxWidth: '400px', mx: 'auto', mb: 3 }}>
+                    Your password has been reset successfully. You will be redirected to the login page in a moment.
+                  </Typography>
+                  
+                  <CircularProgress size={24} thickness={5} sx={{ mt: 2 }} />
+                </Box>
+              ) : (
+                <>
+                  <Box 
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      bgcolor: alpha(theme.palette.primary.main, 0.1),
+                      p: 2,
+                      borderRadius: '50%',
+                      mb: 3
+                    }}
+                  >
+                    <Key sx={{ fontSize: 40, color: theme.palette.primary.main }} />
+                  </Box>
+                
+                  <Typography 
+                    variant="h5" 
+                    textAlign="center" 
+                    fontWeight="700" 
+                    sx={{
+                      background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                      backgroundClip: 'text',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      mb: 1
+                    }}
+                  >
+                    Reset Your Password
+                  </Typography>
+                  
+                  <Typography 
+                    variant="body1" 
+                    color="text.secondary" 
+                    textAlign="center" 
+                    sx={{ mb: 4 }}
+                  >
+                    Please create a new password for your account
+                  </Typography>
+                
+                  {error && (
+                    <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                      {error}
+                    </Alert>
+                  )}
+                
+                  <Box component="form" onSubmit={handleSubmit} noValidate>
+                    <TextField
+                      variant="outlined"
+                      margin="normal"
+                      required
+                      fullWidth
+                      name="newPassword"
+                      label="New Password"
+                      type={showPassword ? 'text' : 'password'}
+                      id="newPassword"
+                      autoComplete="new-password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label="toggle password visibility"
+                              onClick={toggleShowPassword}
+                              edge="end"
+                            >
+                              {showPassword ? <VisibilityOff /> : <Visibility />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{
+                        mb: 2,
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: theme.palette.primary.main,
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: theme.palette.primary.main,
+                          },
+                        },
+                      }}
+                    />
+                    <TextField
+                      variant="outlined"
+                      margin="normal"
+                      required
+                      fullWidth
+                      name="confirmPassword"
+                      label="Confirm Password"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      id="confirmPassword"
+                      autoComplete="new-password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label="toggle password visibility"
+                              onClick={toggleShowConfirmPassword}
+                              edge="end"
+                            >
+                              {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{
+                        mb: 3,
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: theme.palette.primary.main,
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: theme.palette.primary.main,
+                          },
+                        },
+                      }}
+                    />
+                    
+                    <Typography variant="caption" color="text.secondary" display="block" mb={3}>
+                      Password must be at least 8 characters long and include a combination of letters, numbers, and special characters.
+                    </Typography>
+                    
+                    <Button
+                      type="submit"
+                      fullWidth
+                      variant="contained"
+                      disabled={loading}
+                      disableElevation
+                      sx={{ 
+                        mt: 1, 
+                        mb: 2, 
+                        py: 1.5,
+                        borderRadius: 3,
+                        textTransform: 'none',
+                        fontWeight: 'bold',
+                        boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                        background: `linear-gradient(135deg, ${theme.palette.primary.main} 30%, ${theme.palette.primary.dark} 90%)`,
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'translateY(-3px)',
+                          boxShadow: '0 12px 20px rgba(0,0,0,0.15)',
+                        },
+                      }}
+                    >
+                      {loading ? <CircularProgress size={24} color="inherit" /> : 'Reset Password'}
+                    </Button>
+                    
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      color="primary"
+                      onClick={() => navigate('/login')}
+                      sx={{ 
+                        mt: 1,
+                        py: 1.5,
+                        borderRadius: 3,
+                        textTransform: 'none',
+                        fontWeight: 'medium',
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </Box>
+                </>
+              )}
+            </Paper>
+          </Grow>
+        </Container>
       </Fade>
-    </Container>
+    </Box>
   );
 };
 

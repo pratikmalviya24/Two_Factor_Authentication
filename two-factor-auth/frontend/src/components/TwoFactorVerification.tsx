@@ -18,7 +18,12 @@ import {
   Fade,
   Grow,
   IconButton,
-  Zoom
+  Zoom,
+  Avatar,
+  Tabs,
+  Tab,
+  Divider,
+  Tooltip
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import QRCode from 'qrcode.react';
@@ -29,7 +34,16 @@ import {
   Verified, 
   Backspace, 
   CheckCircle,
-  LockReset
+  LockReset,
+  Shield,
+  ArrowForward,
+  AppShortcut,
+  MarkEmailRead,
+  CropFree,
+  VerifiedUser,
+  SmartToy,
+  Key,
+  HttpsOutlined
 } from '@mui/icons-material';
 import apiService from '../services/api';
 import { useApiError } from '../hooks/useApiError';
@@ -81,9 +95,17 @@ const TwoFactorVerification: React.FC = () => {
     if (setupMode) {
       setIsSetupMode(true);
       
+      // If skipMethodSelection flag is set (from profile page), skip method selection
+      // and directly use the authenticator app method
+      if (location.state?.skipMethodSelection) {
+        setShowMethodSelection(false);
+        setSelectedMethod('APP');
+        // Immediately start setup for authenticator app
+        handleSetupAuthenticatorApp();
+      }
       // If coming from the TFA selection screen after registration, skip method selection
       // and directly use the authenticator app method
-      if (isFirstSetup && location.state?.selectedMethod === 'APP') {
+      else if (isFirstSetup && location.state?.selectedMethod === 'APP') {
         setShowMethodSelection(false);
         setSelectedMethod('APP');
         // Immediately start setup for authenticator app
@@ -262,181 +284,415 @@ const TwoFactorVerification: React.FC = () => {
     return null;
   }
 
+  // Render for digit input
   const renderDigitInput = (index: number) => (
     <TextField
+      key={index}
       inputRef={(el) => (inputRefs.current[index] = el)}
       variant="outlined"
-      margin="none"
-      autoFocus={index === 0}
+      autoComplete="off"
+      type="text"
+      value={codeArray[index]}
+      onChange={(e) => handleCodeChange(index, e.target.value)}
+      onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleKeyDown(index, e)}
       inputProps={{
         maxLength: 1,
         style: { 
           textAlign: 'center', 
-          fontSize: '1.5rem', 
-          fontWeight: 600,
-          padding: '12px 8px'
+          fontSize: '1.25rem', 
+          fontWeight: 'bold',
+          padding: '8px 0',
+          width: '100%',
+          caretColor: theme.palette.primary.main
         },
-        pattern: "[0-9]*",
-        inputMode: "numeric"
       }}
-      value={codeArray[index]}
-      onChange={(e) => handleCodeChange(index, e.target.value)}
-      onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleKeyDown(index, e)}
       sx={{
-        width: '60px',
-        height: '70px',
+        width: '46px',
+        mx: 0.5,
         '& .MuiOutlinedInput-root': {
-          borderRadius: 2,
-          bgcolor: alpha(theme.palette.background.paper, 0.8),
+          borderRadius: 1.5,
+          backgroundColor: alpha(theme.palette.background.paper, 0.8),
+          backdropFilter: 'blur(10px)',
           transition: 'all 0.3s ease',
-          '&:hover': {
-            bgcolor: alpha(theme.palette.background.paper, 1),
-          },
           '&.Mui-focused': {
             boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
+            borderColor: theme.palette.primary.main,
+            transform: 'translateY(-2px)',
+          },
+          '&:hover': {
+            borderColor: theme.palette.primary.main,
           }
-        }
+        },
       }}
     />
   );
 
-  const renderMethodSelection = () => (
-    <Slide direction="up" in={showMethodSelection} mountOnEnter unmountOnExit>
-      <Box sx={{ width: '100%' }}>
-        <Typography variant="h5" align="center" fontWeight="600" gutterBottom color="primary" sx={{ mb: 3 }}>
-          {isSetupMode ? "Authenticator App Setup" : "Choose Verification Method"}
+  // Render for method selection
+  const renderMethodSelection = () => {
+    // Check if the user is coming from the profile page
+    const isFromProfile = location.state?.fromProfile === true;
+    
+    return (
+    <Fade in={showMethodSelection} timeout={800}>
+      <Box>
+        <Typography variant="h5" fontWeight="700" textAlign="center" mb={3} 
+          sx={{
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}
+        >
+          {isSetupMode ? 'Choose Your 2FA Method' : 'Verify Your Identity'}
         </Typography>
         
-        {location.state?.message && (
-          <Typography 
-            variant="body1" 
-            align="center" 
-            sx={{ mb: 4, maxWidth: '600px', mx: 'auto' }}
-          >
-            {location.state.message}
-          </Typography>
-        )}
+        <Typography variant="body1" textAlign="center" mb={4} color="text.secondary" 
+          sx={{ maxWidth: '500px', mx: 'auto' }}
+        >
+          {isSetupMode 
+            ? 'Two-factor authentication adds an extra layer of security to your account. Choose your preferred verification method.' 
+            : 'Please select a verification method to continue.'}
+        </Typography>
         
-        <Grid container spacing={3} justifyContent={isSetupMode ? "center" : "space-around"}>
-          <Grid item xs={12} sm={isSetupMode ? 10 : 5.5} md={isSetupMode ? 8 : 5}>
-            <Grow in={true} timeout={800} style={{ transformOrigin: '50% 50%' }}>
-              <Card
+        <Grid container spacing={4} justifyContent="center">
+          <Grid item xs={12} sm={isFromProfile ? 12 : 6} md={isFromProfile ? 8 : 5}>
+            <Grow in={true} timeout={800} style={{ transformOrigin: '50% 0%' }}>
+              <Card 
                 elevation={4}
+                onClick={() => handleMethodSelect('APP')}
                 sx={{
+                  cursor: 'pointer',
                   height: '100%',
-                  borderRadius: 3,
+                  display: 'flex',
+                  flexDirection: 'column',
                   transition: 'all 0.3s ease',
-                  border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                  borderRadius: 3,
                   overflow: 'hidden',
+                  border: '2px solid transparent',
+                  maxWidth: isFromProfile ? '450px' : 'none',
+                  mx: isFromProfile ? 'auto' : 0,
+                  position: 'relative',
                   '&:hover': {
                     transform: 'translateY(-8px)',
-                    boxShadow: '0 12px 20px rgba(0,0,0,0.1)',
-                    border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`
+                    boxShadow: '0 12px 28px rgba(0,0,0,0.15)',
+                    borderColor: alpha(theme.palette.primary.main, 0.3),
+                    '& .hover-shine': {
+                      transform: 'translateX(100%)',
+                    }
                   }
                 }}
               >
-                <Box sx={{ 
-                  textAlign: 'center', 
-                  p: 3, 
-                  background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.4)} 0%, ${alpha(theme.palette.primary.main, 0.2)} 100%)`,
-                }}>
-                  <PhoneAndroid 
+                {/* Shine effect on hover */}
+                <Box 
+                  className="hover-shine"
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    background: 'linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%)',
+                    transform: 'translateX(-100%)',
+                    transition: 'transform 0.6s ease',
+                    zIndex: 5,
+                    pointerEvents: 'none',
+                  }}
+                />
+                
+                <Box 
+                  sx={{
+                    background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.dark, 0.2)} 100%)`,
+                    p: 3,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {/* Decorative circles */}
+                  <Box sx={{
+                    position: 'absolute',
+                    width: '120px',
+                    height: '120px',
+                    borderRadius: '50%',
+                    background: alpha(theme.palette.primary.main, 0.1),
+                    top: '-60px',
+                    right: '-60px',
+                  }} />
+                  
+                  <Box sx={{
+                    position: 'absolute',
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '50%',
+                    background: alpha(theme.palette.primary.main, 0.1),
+                    bottom: '-20px',
+                    left: '30px',
+                  }} />
+                  
+                  <Avatar 
                     sx={{ 
-                      fontSize: 50, 
-                      color: theme.palette.primary.main,
-                      filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.2))'
-                    }} 
-                  />
-                </Box>
-                <CardContent sx={{ p: 3 }}>
-                  <Typography variant="h6" align="center" fontWeight="600" gutterBottom>
-                    Authenticator App
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 2 }}>
-                    {isSetupMode 
-                      ? "Use an authenticator app like Google Authenticator or Authy for the most secure experience"
-                      : "Enter the verification code from your authenticator app"}
-                  </Typography>
-                </CardContent>
-                <CardActions sx={{ p: 0 }}>
-                  <Button 
-                    fullWidth 
-                    variant="contained"
-                    onClick={() => handleMethodSelect('APP')}
-                    sx={{
-                      py: 1.5,
-                      borderRadius: 0,
-                      textTransform: 'none',
-                      fontWeight: 600,
-                      background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                      '&:hover': {
-                        background: `linear-gradient(90deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
-                      }
+                      width: 90, 
+                      height: 90, 
+                      bgcolor: alpha(theme.palette.primary.main, 0.9),
+                      color: 'white',
+                      boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                      border: '4px solid white',
+                      zIndex: 2,
                     }}
                   >
-                    {isSetupMode ? "Set Up Authenticator" : "Use Authenticator"}
+                    <SmartToy sx={{ fontSize: 40 }} />
+                  </Avatar>
+                </Box>
+                <CardContent sx={{ flexGrow: 1, textAlign: 'center', px: 3, py: 4 }}>
+                  <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
+                    <AppShortcut color="primary" sx={{ fontSize: 24 }} />
+                    <Typography variant="h6" fontWeight="bold">
+                      Authenticator App
+                    </Typography>
+                  </Box>
+                  
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Use Google Authenticator, Authy, or another TOTP app to generate verification codes.
+                  </Typography>
+                  
+                  <Box 
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: 2,
+                      mb: 2, 
+                      p: 1.5,
+                      borderRadius: 2,
+                      bgcolor: alpha(theme.palette.primary.main, 0.05),
+                    }}
+                  >
+                    <Tooltip title="Secure" placement="top">
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <HttpsOutlined sx={{ color: theme.palette.success.main, fontSize: 20 }} />
+                        <Typography variant="caption" color="success.main" fontWeight="medium">
+                          Secure
+                        </Typography>
+                      </Box>
+                    </Tooltip>
+
+                    <Divider orientation="vertical" flexItem sx={{ height: 30 }} />
+
+                    <Tooltip title="Works offline" placement="top">
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <Key sx={{ color: theme.palette.primary.main, fontSize: 20 }} />
+                        <Typography variant="caption" color="primary" fontWeight="medium">
+                          Offline
+                        </Typography>
+                      </Box>
+                    </Tooltip>
+
+                    <Divider orientation="vertical" flexItem sx={{ height: 30 }} />
+
+                    <Tooltip title="Easy to use" placement="top">
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <VerifiedUser sx={{ color: theme.palette.info.main, fontSize: 20 }} />
+                        <Typography variant="caption" color="info.main" fontWeight="medium">
+                          Easy
+                        </Typography>
+                      </Box>
+                    </Tooltip>
+                  </Box>
+                </CardContent>
+                <CardActions sx={{ justifyContent: 'center', pb: 3 }}>
+                  <Button 
+                    variant="contained" 
+                    color="primary"
+                    size="large"
+                    disableElevation
+                    endIcon={<ArrowForward />}
+                    sx={{ 
+                      borderRadius: 8,
+                      px: 4,
+                      py: 1.2,
+                      textTransform: 'none',
+                      fontWeight: 'bold',
+                      background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                      boxShadow: '0 4px 12px rgba(63,81,181,0.4)',
+                      '&:hover': {
+                        boxShadow: '0 6px 16px rgba(63,81,181,0.6)',
+                      },
+                    }}
+                  >
+                    {isSetupMode ? 'Set Up App' : 'Use App'}
                   </Button>
                 </CardActions>
               </Card>
             </Grow>
           </Grid>
-          
-          {!isSetupMode && (
-            <Grid item xs={12} sm={5.5} md={5}>
-              <Grow in={true} timeout={800} style={{ transitionDelay: '200ms', transformOrigin: '50% 50%' }}>
-                <Card
+
+          {/* Only show the EMAIL option if not coming from profile page */}
+          {!isFromProfile && (
+            <Grid item xs={12} sm={6} md={5}>
+              <Grow in={true} timeout={800} style={{ transformOrigin: '50% 0%', transitionDelay: '100ms' }}>
+                <Card 
                   elevation={4}
+                  onClick={() => handleMethodSelect('EMAIL')}
                   sx={{
+                    cursor: 'pointer',
                     height: '100%',
-                    borderRadius: 3,
+                    display: 'flex',
+                    flexDirection: 'column',
                     transition: 'all 0.3s ease',
-                    border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                    borderRadius: 3,
                     overflow: 'hidden',
+                    border: '2px solid transparent',
+                    position: 'relative',
                     '&:hover': {
                       transform: 'translateY(-8px)',
-                      boxShadow: '0 12px 20px rgba(0,0,0,0.1)',
-                      border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`
+                      boxShadow: '0 12px 28px rgba(0,0,0,0.15)',
+                      borderColor: alpha(theme.palette.primary.main, 0.3),
+                      '& .hover-shine': {
+                        transform: 'translateX(100%)',
+                      }
                     }
                   }}
                 >
-                  <Box sx={{ 
-                    textAlign: 'center', 
-                    p: 3, 
-                    background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.4)} 0%, ${alpha(theme.palette.primary.main, 0.2)} 100%)`,
-                  }}>
-                    <Email 
+                  {/* Shine effect on hover */}
+                  <Box 
+                    className="hover-shine"
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      background: 'linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%)',
+                      transform: 'translateX(-100%)',
+                      transition: 'transform 0.6s ease',
+                      zIndex: 5,
+                      pointerEvents: 'none',
+                    }}
+                  />
+                  
+                  <Box 
+                    sx={{
+                      background: `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.dark, 0.2)} 100%)`,
+                      p: 3,
+                      display: 'flex',
+                      justifyContent: 'center',
+                      position: 'relative',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {/* Decorative circles */}
+                    <Box sx={{
+                      position: 'absolute',
+                      width: '120px',
+                      height: '120px',
+                      borderRadius: '50%',
+                      background: alpha(theme.palette.info.main, 0.1),
+                      top: '-60px',
+                      right: '-60px',
+                    }} />
+                    
+                    <Box sx={{
+                      position: 'absolute',
+                      width: '80px',
+                      height: '80px',
+                      borderRadius: '50%',
+                      background: alpha(theme.palette.info.main, 0.1),
+                      bottom: '-20px',
+                      left: '30px',
+                    }} />
+                    
+                    <Avatar 
                       sx={{ 
-                        fontSize: 50, 
-                        color: theme.palette.primary.main,
-                        filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.2))'
-                      }} 
-                    />
-                  </Box>
-                  <CardContent sx={{ p: 3 }}>
-                    <Typography variant="h6" align="center" fontWeight="600" gutterBottom>
-                      Email
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 2 }}>
-                      Receive a one-time verification code via email sent to your registered address
-                    </Typography>
-                  </CardContent>
-                  <CardActions sx={{ p: 0 }}>
-                    <Button 
-                      fullWidth 
-                      variant="contained"
-                      onClick={() => handleMethodSelect('EMAIL')}
-                      sx={{
-                        py: 1.5,
-                        borderRadius: 0,
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                        '&:hover': {
-                          background: `linear-gradient(90deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
-                        }
+                        width: 90, 
+                        height: 90, 
+                        bgcolor: alpha(theme.palette.info.main, 0.9),
+                        color: 'white',
+                        boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                        border: '4px solid white',
+                        zIndex: 2,
                       }}
                     >
-                      Send Code
+                      <Email sx={{ fontSize: 40 }} />
+                    </Avatar>
+                  </Box>
+                  <CardContent sx={{ flexGrow: 1, textAlign: 'center', px: 3, py: 4 }}>
+                    <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
+                      <MarkEmailRead color="info" sx={{ fontSize: 24 }} />
+                      <Typography variant="h6" fontWeight="bold">
+                        Email Verification
+                      </Typography>
+                    </Box>
+                    
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Receive a verification code via email when you sign in to your account.
+                    </Typography>
+                    
+                    <Box 
+                      sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        gap: 2,
+                        mb: 2, 
+                        p: 1.5,
+                        borderRadius: 2,
+                        bgcolor: alpha(theme.palette.info.main, 0.05),
+                      }}
+                    >
+                      <Tooltip title="No app needed" placement="top">
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <AppShortcut sx={{ color: theme.palette.success.main, fontSize: 20 }} />
+                          <Typography variant="caption" color="success.main" fontWeight="medium">
+                            No App
+                          </Typography>
+                        </Box>
+                      </Tooltip>
+
+                      <Divider orientation="vertical" flexItem sx={{ height: 30 }} />
+
+                      <Tooltip title="Convenient" placement="top">
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <CheckCircle sx={{ color: theme.palette.info.main, fontSize: 20 }} />
+                          <Typography variant="caption" color="info.main" fontWeight="medium">
+                            Easy
+                          </Typography>
+                        </Box>
+                      </Tooltip>
+
+                      <Divider orientation="vertical" flexItem sx={{ height: 30 }} />
+
+                      <Tooltip title="Email Access Required" placement="top">
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <MarkEmailRead sx={{ color: theme.palette.primary.main, fontSize: 20 }} />
+                          <Typography variant="caption" color="primary" fontWeight="medium">
+                            Email
+                          </Typography>
+                        </Box>
+                      </Tooltip>
+                    </Box>
+                  </CardContent>
+                  <CardActions sx={{ justifyContent: 'center', pb: 3 }}>
+                    <Button 
+                      variant="contained" 
+                      color="info"
+                      size="large"
+                      disableElevation
+                      endIcon={<ArrowForward />}
+                      sx={{ 
+                        borderRadius: 8,
+                        px: 4,
+                        py: 1.2,
+                        textTransform: 'none',
+                        fontWeight: 'bold',
+                        background: `linear-gradient(90deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`,
+                        boxShadow: '0 4px 12px rgba(33,150,243,0.4)',
+                        '&:hover': {
+                          boxShadow: '0 6px 16px rgba(33,150,243,0.6)',
+                        },
+                      }}
+                    >
+                      {isSetupMode ? 'Set Up Email' : 'Use Email'}
                     </Button>
                   </CardActions>
                 </Card>
@@ -445,280 +701,216 @@ const TwoFactorVerification: React.FC = () => {
           )}
         </Grid>
       </Box>
-    </Slide>
-  );
+    </Fade>
+    );
+  };
 
+  // Main verification form
   const renderVerificationForm = () => (
-    <Slide direction="up" in={!showMethodSelection} mountOnEnter unmountOnExit>
-      <Box>
-        <Typography 
-          component="h1" 
-          variant="h4" 
-          align="center"
-          fontWeight="700"
-          gutterBottom
+    <Fade in={!showMethodSelection} timeout={800}>
+      <Box 
+        sx={{ 
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
+        <Typography variant="h6" fontWeight="700" textAlign="center" mb={1}
           sx={{
             background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
             backgroundClip: 'text',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
-            MozBackgroundClip: 'text',
-            MozTextFillColor: 'transparent',
-            msBackgroundClip: 'text',
-            color: 'transparent',
-            mb: 2
           }}
         >
-          {isSetupMode 
-            ? "Set Up Two-Factor Authentication" 
-            : selectedMethod === 'APP' 
-              ? "Authenticator App Verification" 
-              : "Email Verification"}
+          {verificationSuccess 
+            ? 'Verification Successful!' 
+            : isSetupMode 
+              ? 'Set Up Authenticator' 
+              : 'Enter Verification Code'}
         </Typography>
-        
-        <Box sx={{ position: 'relative', mb: 4 }}>
-          {loading && !animatingVerification && (
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              alignItems: 'center',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(255, 255, 255, 0.7)',
-              zIndex: 2,
-              borderRadius: 2
-            }}>
-              <CircularProgress size={40} />
-            </Box>
-          )}
 
-          {error && (
-            <Box sx={{ 
-              mb: 3, 
-              p: 2, 
-              bgcolor: alpha(theme.palette.error.main, 0.1), 
-              borderRadius: 2,
-              border: `1px solid ${alpha(theme.palette.error.main, 0.3)}`,
-              display: 'flex',
-              alignItems: 'center',
-              animation: 'shake 0.5s ease-in-out',
-              '@keyframes shake': {
-                '0%, 100%': { transform: 'translateX(0)' },
-                '10%, 30%, 50%, 70%, 90%': { transform: 'translateX(-5px)' },
-                '20%, 40%, 60%, 80%': { transform: 'translateX(5px)' }
-              }
-            }}>
-              <Box sx={{ mr: 1, color: theme.palette.error.main }}>
-                <LockReset />
-              </Box>
-              <Typography color="error.main" variant="body2">
-                {error}
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          mb: 1.5, 
+          mt: 1, 
+          gap: 1,
+          bgcolor: selectedMethod === 'APP' 
+            ? alpha(theme.palette.primary.main, 0.1) 
+            : alpha(theme.palette.info.main, 0.1),
+          borderRadius: 2,
+          px: 2,
+          py: 1
+        }}>
+          {selectedMethod === 'APP' ? (
+            <>
+              <SmartToy color="primary" fontSize="small" />
+              <Typography variant="body2" color="primary.main" fontWeight={500}>
+                Authenticator App Verification
               </Typography>
-            </Box>
-          )}
-
-          {isSetupMode && selectedMethod === 'APP' && qrCode && (
-            <Fade in={true} timeout={1000}>
-              <Box sx={{ mt: 3, mb: 4, textAlign: 'center' }}>
-                <Typography 
-                  variant="subtitle1" 
-                  sx={{ 
-                    mb: 3, 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    color: theme.palette.primary.main,
-                    fontWeight: 500
-                  }}
-                >
-                  <Security sx={{ mr: 1 }} />
-                  Scan this QR code with your authenticator app
-                </Typography>
-                <Box
-                  sx={{
-                    display: 'inline-block',
-                    p: 3,
-                    bgcolor: 'white',
-                    borderRadius: 2,
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                    border: `4px solid ${theme.palette.primary.main}`,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'scale(1.02)',
-                      boxShadow: '0 8px 25px rgba(0,0,0,0.15)'
-                    }
-                  }}
-                >
-                  <QRCode value={qrCode} size={200} level="H" includeMargin={true} />
-                </Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 3 }}>
-                  After scanning, enter the code from your app below to complete setup
-                </Typography>
-              </Box>
-            </Fade>
-          )}
-
-          {selectedMethod === 'EMAIL' && (
-            <Fade in={true} timeout={1000}>
-              <Box sx={{ mt: 3, mb: 4, textAlign: 'center', p: 3, bgcolor: alpha(theme.palette.primary.main, 0.05), borderRadius: 2 }}>
-                <Box sx={{ color: theme.palette.primary.main, fontSize: 60, mb: 2 }}>
-                  <Email />
-                </Box>
-                <Typography variant="h6" sx={{ mb: 2, color: theme.palette.primary.main }}>
-                  Verification Code Sent
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 2 }}>
-                  We've sent a verification code to your email address.
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Please check your inbox and enter the 6-digit code below.
-                </Typography>
-              </Box>
-            </Fade>
-          )}
-          
-          {!isSetupMode && selectedMethod === 'APP' && !qrCode && (
-            <Fade in={true} timeout={1000}>
-              <Box sx={{ mt: 3, mb: 4, textAlign: 'center', p: 3, bgcolor: alpha(theme.palette.primary.main, 0.05), borderRadius: 2 }}>
-                <Box sx={{ color: theme.palette.primary.main, fontSize: 60, mb: 2 }}>
-                  <PhoneAndroid />
-                </Box>
-                <Typography variant="h6" sx={{ mb: 2, color: theme.palette.primary.main }}>
-                  Authenticator App Verification
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 2 }}>
-                  Open your authenticator app to get your verification code.
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Enter the 6-digit code from your app below.
-                </Typography>
-              </Box>
-            </Fade>
+            </>
+          ) : (
+            <>
+              <Email color="info" fontSize="small" />
+              <Typography variant="body2" color="info.main" fontWeight={500}>
+                Email Verification
+              </Typography>
+            </>
           )}
         </Box>
 
-        <Box 
-          component="form" 
-          onSubmit={handleSubmit} 
-          sx={{ 
-            mt: 3, 
-            width: '100%',
-            position: 'relative',
-          }}
-        >
-          <Fade in={!animatingVerification} timeout={500}>
-            <Box>
-              <Typography 
-                variant="subtitle1" 
-                align="center" 
-                gutterBottom 
-                fontWeight="500"
-              >
-                {isSetupMode 
-                  ? "Enter the verification code to complete setup" 
-                  : `Enter the verification code ${selectedMethod === 'APP' ? 'from your authenticator app' : 'sent to your email'}`}
-              </Typography>
+        <Typography variant="body2" textAlign="center" mb={2} color="text.secondary">
+          {verificationSuccess 
+            ? 'You have successfully verified your identity.'
+            : selectedMethod === 'APP' 
+              ? isSetupMode 
+                ? 'Scan the QR code with your authenticator app, then enter the code.'
+                : 'Enter the 6-digit code from your authenticator app.'
+              : 'Enter the 6-digit code sent to your email address.'}
+        </Typography>
+
+        {/* QR Code for setup mode */}
+        {isSetupMode && selectedMethod === 'APP' && qrCode && (
+          <Grow in={true} timeout={800}>
+            <Box 
+              sx={{
+                p: 2,
+                mb: 2,
+                borderRadius: 2,
+                bgcolor: 'white',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                position: 'relative',
+                overflow: 'hidden',
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+              }}
+            >
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                mb: 1.5,
+                gap: 1
+              }}>
+                <CropFree color="primary" fontSize="small" />
+                <Typography variant="subtitle2" fontWeight={600} color="primary.main">
+                  Scan QR Code
+                </Typography>
+              </Box>
               
-              <Box 
-                sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'center', 
-                  gap: 1.5,
-                  my: 3
+              <Box sx={{ 
+                p: 1.5, 
+                bgcolor: 'white', 
+                borderRadius: 2, 
+                boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
+                position: 'relative',
+                zIndex: 2,
+              }}>
+                <div style={{ background: 'white' }}>
+                  <QRCode 
+                    value={qrCode} 
+                    size={150} 
+                    level="M"
+                    includeMargin={true}
+                    renderAs="svg"
+                  />
+                </div>
+              </Box>
+                
+              <Typography variant="caption" color="text.secondary" mt={1.5} textAlign="center">
+                Can't scan? Use this key:
+              </Typography>
+              <Typography 
+                variant="caption" 
+                fontFamily="monospace"
+                fontWeight="bold"
+                mt={0.5}
+                p={1}
+                bgcolor={alpha(theme.palette.primary.main, 0.1)}
+                borderRadius={1.5}
+                sx={{
+                  letterSpacing: '0.5px',
+                  position: 'relative',
+                  zIndex: 2,
+                  fontSize: '0.7rem',
                 }}
               >
-                {Array.from({ length: 6 }).map((_, index) => (
-                  <Box key={index} sx={{ position: 'relative' }}>
-                    {renderDigitInput(index)}
-                  </Box>
-                ))}
-              </Box>
-
+                {qrCode.replace('otpauth://totp/', '').split('?')[0]}
+              </Typography>
+            </Box>
+          </Grow>
+        )}
+        
+        {/* Verification code input */}
+        {!verificationSuccess && (
+          <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: '380px' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                mb: 2,
+                mt: isSetupMode && selectedMethod === 'APP' ? 0 : 1,
+              }}
+            >
+              {codeArray.map((_, index) => renderDigitInput(index))}
+            </Box>
+            
+            <Box sx={{ textAlign: 'center' }}>
               <Button
                 type="submit"
-                fullWidth
                 variant="contained"
+                color={selectedMethod === 'APP' ? "primary" : "info"}
+                size="medium"
+                disabled={loading || code.length !== 6}
+                disableElevation
                 sx={{
-                  mt: 3,
-                  mb: 2,
-                  py: 1.2,
-                  borderRadius: 6,
-                  position: 'relative',
-                  overflow: 'hidden',
+                  mt: 1,
+                  borderRadius: 4,
+                  px: 4,
+                  py: 1,
+                  fontWeight: 'bold',
                   textTransform: 'none',
-                  fontWeight: 600,
-                  fontSize: '1rem',
-                  background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                  background: selectedMethod === 'APP'
+                    ? `linear-gradient(135deg, ${theme.palette.primary.main} 30%, ${theme.palette.primary.dark} 90%)`
+                    : `linear-gradient(135deg, ${theme.palette.info.main} 30%, ${theme.palette.info.dark} 90%)`,
                   transition: 'all 0.3s ease',
-                  boxShadow: `0 8px 15px ${alpha(theme.palette.primary.main, 0.3)}`,
                   '&:hover': {
                     transform: 'translateY(-2px)',
-                    boxShadow: `0 12px 20px ${alpha(theme.palette.primary.main, 0.4)}`,
-                  }
+                    boxShadow: '0 6px 12px rgba(0,0,0,0.15)',
+                  },
                 }}
-                disabled={loading || code.length !== 6}
               >
-                {isSetupMode ? "Complete Setup" : "Verify"}
+                {loading ? <CircularProgress size={20} /> : 'Verify'}
               </Button>
               
               {!isSetupMode && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                  <Button 
-                    color="primary"
-                    size="small"
-                    onClick={() => setShowMethodSelection(true)}
-                    sx={{ textTransform: 'none' }}
-                  >
-                    Try a different verification method
-                  </Button>
-                </Box>
+                <Button
+                  variant="text"
+                  color={selectedMethod === 'APP' ? "primary" : "info"}
+                  onClick={() => setShowMethodSelection(true)}
+                  size="small"
+                  sx={{ 
+                    mt: 1.5, 
+                    ml: 1,
+                    textTransform: 'none',
+                    fontWeight: 'medium',
+                  }}
+                >
+                  Change Method
+                </Button>
               )}
             </Box>
-          </Fade>
-
-          <Zoom in={animatingVerification} style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
-            <Box sx={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              p: 3
-            }}>
-              <Box 
-                sx={{ 
-                  width: 80, 
-                  height: 80, 
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: theme.palette.success.main,
-                  color: 'white',
-                  mb: 2,
-                  animation: 'pulse 1.5s infinite',
-                  '@keyframes pulse': {
-                    '0%': { boxShadow: `0 0 0 0 ${alpha(theme.palette.success.main, 0.7)}` },
-                    '70%': { boxShadow: `0 0 0 15px ${alpha(theme.palette.success.main, 0)}` },
-                    '100%': { boxShadow: `0 0 0 0 ${alpha(theme.palette.success.main, 0)}` }
-                  }
-                }}
-              >
-                <CheckCircle sx={{ fontSize: 40 }} />
-              </Box>
-              <Typography variant="h6" gutterBottom>
-                Verification Successful
-              </Typography>
-              <Typography variant="body2" color="text.secondary" align="center">
-                {isSetupMode ? "Two-factor authentication has been set up successfully!" : "Redirecting to your secure dashboard..."}
-              </Typography>
-            </Box>
-          </Zoom>
-        </Box>
+          </form>
+        )}
       </Box>
-    </Slide>
+    </Fade>
   );
 
   return (
@@ -763,39 +955,41 @@ const TwoFactorVerification: React.FC = () => {
         }}
       />
 
-      <Grow in={true} timeout={800}>
-        <Container component="main" maxWidth="md" sx={{ position: 'relative', zIndex: 1 }}>
-          <Paper
-            elevation={10}
-            sx={{
-              p: 4,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              borderRadius: 3,
-              background: 'rgba(255, 255, 255, 0.8)',
-              backdropFilter: 'blur(10px)',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
-            }}
-          >
-            <Box
+      <Fade in={true} timeout={800}>
+        <Container component="main" maxWidth="sm" sx={{ position: 'relative', zIndex: 1 }}>
+          <Grow in={true} timeout={800} style={{ transformOrigin: '50% 0%' }}>
+            <Paper
+              elevation={10}
               sx={{
+                p: { xs: 2, md: 3 },
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'center',
-                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                p: 2,
-                borderRadius: '50%',
-                mb: 2
+                borderRadius: 2,
+                background: 'rgba(255, 255, 255, 0.8)',
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 8px 20px rgba(0,0,0,0.1)'
               }}
             >
-              <Verified sx={{ fontSize: 40, color: theme.palette.primary.main }} />
-            </Box>
-
-            {showMethodSelection ? renderMethodSelection() : renderVerificationForm()}
-          </Paper>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  p: 1.5,
+                  borderRadius: '50%',
+                  mb: 1.5
+                }}
+              >
+                <Shield sx={{ fontSize: 32, color: theme.palette.primary.main }} />
+              </Box>
+              
+              {showMethodSelection ? renderMethodSelection() : renderVerificationForm()}
+            </Paper>
+          </Grow>
         </Container>
-      </Grow>
+      </Fade>
     </Box>
   );
 };

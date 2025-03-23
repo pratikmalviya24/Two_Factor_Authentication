@@ -9,12 +9,10 @@
 6. [Activity Diagrams](#activity-diagrams)
 7. [Entity-Relationship Model](#entity-relationship-model)
 8. [Data Flow Analysis](#data-flow-analysis)
-9. [Component Architecture](#component-architecture)
-10. [Deployment Configuration](#deployment-configuration)
-11. [User Interface Design](#user-interface-design)
-12. [Security Considerations](#security-considerations)
-13. [Team Contributions](#team-contributions)
-14. [Setup Instructions](#setup-instructions)
+9. [User Interface Design](#user-interface-design)
+10. [Security Considerations](#security-considerations)
+11. [Team Contributions](#team-contributions)
+12. [Setup Instructions](#setup-instructions)
 
 ## Project Overview
 
@@ -68,41 +66,6 @@ Key components in the architecture:
    - Google Authenticator (or compatible TOTP apps): Generates verification codes
 
 This architecture follows a standard n-tier approach with clear separation of concerns, enabling maintainability, scalability, and security best practices.
-
-### Deployment Architecture
-
-The deployment diagram illustrates how the system would be deployed in a production environment with high availability and scalability considerations.
-
-![Deployment Diagram](diagrams/DeploymentDiagram.png)
-
-Key deployment components:
-
-1. **Client Tier**
-   - Web browsers executing the React SPA
-   - CDN for static assets distribution
-
-2. **Web Tier**
-   - NGINX servers hosting the compiled frontend application
-   - Load balancers distributing traffic for high availability
-
-3. **Application Tier**
-   - Clustered API servers running Spring Boot applications
-   - Horizontally scalable for increased traffic demands
-
-4. **Data Tier**
-   - Primary-replica database setup for high availability
-   - Read operations distributed to replicas for better performance
-
-5. **External Services**
-   - Email service for sending verification emails and notifications
-   - Monitoring and logging infrastructure for system observability
-
-This deployment architecture ensures:
-- High availability through redundancy at each tier
-- Scalability through horizontal scaling of stateless components
-- Performance through load distribution and caching
-- Security through network segregation and encrypted communications
-- Observability through comprehensive monitoring and logging
 
 ## Use Case Analysis
 
@@ -487,69 +450,91 @@ The data flow diagram illustrates how data moves through the Two-Factor Authenti
 
 This comprehensive data flow ensures security at each step while maintaining a smooth user experience throughout all authentication processes.
 
-## Testing Strategy
-
-## Component Architecture
-
-### Component Diagram
-
-![Component Diagram](https://i.imgur.com/Bx56LbR.png)
-
-### Key Components:
-
-#### Backend:
-- **Security Module**: JWT filters, authentication providers, CORS configuration
-- **Controller Layer**: REST endpoints for client communication
-- **Service Layer**: Business logic implementation
-- **Repository Layer**: Data access operations
-- **Model Layer**: Entity definitions and DTO objects
-
-#### Frontend:
-- **Authentication Components**: Login, Register, 2FA setup forms
-- **User Profile Components**: Profile management UI
-- **Service Layer**: API communication via Axios
-- **Context Providers**: Global state management
-- **Routing Components**: Protected and public routes
-
-## Deployment Configuration
-
-### Deployment Diagram
-
-![Deployment Diagram](https://i.imgur.com/JlYYhq8.png)
-
-### Deployment Architecture:
-
-The application is containerized using Docker for consistent deployment across environments:
-
-- **Frontend Container**: Nginx serving static React files
-- **Backend Container**: Spring Boot application
-- **Database Container**: MySQL database
-- **Docker Network**: Internal communication between containers
-- **Docker Volumes**: Persistent data storage
-
-### Infrastructure Requirements:
-- Docker and Docker Compose
-- Minimum 2GB RAM, 1 CPU core
-- 10GB storage for containers and database
-- HTTPS capability for production environments
-
 ## User Interface Design
 
-### Login Screen with 2FA
+The Two-Factor Authentication system features a clean, modern UI that prioritizes usability and security. The interface follows a coherent design language with consistent elements across different screens, employing a light blue color scheme that conveys trust and security.
 
-![Login UI](https://i.imgur.com/P2jEe9K.png)
+### Authentication Flow UI
 
-### 2FA Setup Screen
+#### Login Screen
+![Login UI](diagrams/login-screen.png)
 
-![2FA Setup UI](https://i.imgur.com/3xTf8aY.png)
+The login screen features:
+- Simple, focused layout with prominent input fields
+- Clear visual hierarchy guiding users through the login process
+- Visually distinct "Sign In" button with appropriate prominence
+- Password visibility toggle for better usability
+- reCAPTCHA integration for security
+- Helpful links for account creation and password recovery
+- Clean, distraction-free design that focuses on the authentication task
 
-### User Dashboard
+#### Two-Factor Authentication Method Selection
+![2FA Method Selection](diagrams/2fa-method-selection.png)
 
-![Dashboard UI](https://i.imgur.com/wDcQp7A.png)
+The 2FA method selection screen includes:
+- Clear heading indicating the verification purpose
+- Visual representation of different authentication methods
+- Informative descriptions explaining each method's benefits
+- Method cards with distinct visual cues and status indicators
+- Simplified action buttons for quick method selection
+- Feature comparison through intuitive icons and labels
+- Responsive design that adapts to different screen sizes
 
-### Password Reset Flow
+#### Account Creation Flow
+![Account Creation](diagrams/account-creation.png)
 
-![Password Reset UI](https://i.imgur.com/VthT5V2.png)
+The registration process features:
+- Multi-step approach breaking down the registration into manageable segments
+- Progress indicator showing current step in the process
+- Visual cues for password requirements
+- Consistent input styling with appropriate validation feedback
+- Form fields with descriptive labels and placeholder text
+- Clear separation between account information and security setup
+- Responsive design accommodating various screen sizes
+
+### User Profile and Security Management
+
+#### Security Settings Panel
+![Security Settings](diagrams/security-settings.png)
+
+The security settings interface provides:
+- Clearly organized security options in visually distinct cards
+- Two-Factor Authentication status with visual indicators
+- Actionable buttons for security feature management
+- Color-coded sections (green for active, blue for information, red for danger)
+- Confirmation indicators for enabled security features
+- Clear explanatory text for each security option
+- Visually distinct "danger zone" for account deletion
+
+#### Two-Factor Authentication Setup
+![2FA Setup UI](diagrams/2fa-setup.png)
+
+The 2FA setup screen includes:
+- Clear instructions guiding users through the setup process
+- Visual differentiation between enabling and skipping options
+- Educational content explaining the benefits of 2FA
+- Blue shield icon consistently representing security features
+- Clear call-to-action buttons with appropriate visual hierarchy
+- Options to defer setup without sacrificing usability
+
+### Design Principles Applied
+
+1. **Consistency**: The interface maintains consistent visual language, typography, color scheme, and component styling across all screens, creating a unified experience.
+
+2. **Clarity**: Clear, concise instructions and labels guide users through security-critical processes. The UI employs whitespace effectively to avoid overwhelming users with information.
+
+3. **Feedback**: The system provides immediate visual feedback for user actions, clearly indicating success states, validation errors, and progress.
+
+4. **Accessibility**: High contrast text, adequate text sizing, and clear focus states ensure the interface is usable for people with various abilities.
+
+5. **Security-Focused Design**: The UI implements recognized security patterns like masked passwords, clear security status indicators, and confirmation dialogs for critical actions.
+
+6. **Progressive Disclosure**: Complex security features are presented in digestible steps, with additional information revealed progressively to avoid overwhelming users.
+
+7. **Mobile-Friendly**: The responsive design adapts to different screen sizes while maintaining usability and important security elements.
+
+This user interface design ensures that security features remain accessible and understandable to users of varying technical levels, striking a balance between security requirements and usability principles.
+
 
 ## Security Considerations
 

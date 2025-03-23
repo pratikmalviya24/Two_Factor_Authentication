@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Container, Paper, Typography, Box, CircularProgress, IconButton, AppBar, Toolbar, Button, Dialog, DialogTitle, DialogContent, DialogActions, Switch, Fade, Grow, Avatar, useTheme, alpha, Snackbar, Alert, Card, CardContent, Divider } from '@mui/material';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Container, Paper, Typography, Box, CircularProgress, IconButton, AppBar, Toolbar, Button, Dialog, DialogTitle, DialogContent, DialogActions, Switch, Fade, Grow, Avatar, useTheme, alpha, Snackbar, Alert, Card, CardContent, Divider, Grid, Chip } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowBack, Security, DeleteForever, Person, Shield, VpnKey, CheckCircle, QrCode2 } from '@mui/icons-material';
+import { ArrowBack, Security, DeleteForever, Person, Shield, VpnKey, CheckCircle, QrCode2, Email, AccountCircle, Verified, Warning } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { useApiError } from '../hooks/useApiError';
 import apiService from '../services/api';
@@ -23,6 +23,26 @@ const UserProfile = () => {
   const loadingRef = useRef(false);
   const [renderKey, setRenderKey] = useState(Date.now());
   const locationStateProcessedRef = useRef(false);
+  const [disableTfaDialogOpen, setDisableTfaDialogOpen] = useState(false);
+
+  // Memoized function to load TFA settings
+  const loadSettings = useCallback(async () => {
+    // Prevent duplicate API calls
+    if (loadingRef.current) return;
+    
+    loadingRef.current = true;
+    setTfaLoading(true);
+    
+    try {
+      const settings = await getTfaSettings();
+      setTfaEnabled(settings.enabled);
+    } catch (error) {
+      setError('Failed to load 2FA settings');
+    } finally {
+      setTfaLoading(false);
+      loadingRef.current = false;
+    }
+  }, [setError]);
 
   useEffect(() => {
     // Only process the location state once to prevent infinite loop
@@ -53,36 +73,17 @@ const UserProfile = () => {
       window.history.replaceState({}, document.title);
     }
     
-    // Load TFA settings if not set from navigation state
-    const loadSettings = async () => {
-      // Prevent duplicate API calls
-      if (loadingRef.current) return;
-      
-      loadingRef.current = true;
-      try {
-        const settings = await getTfaSettings();
-        setTfaEnabled(settings.enabled);
-      } catch (error) {
-        setError('Failed to load 2FA settings');
-      } finally {
-        setTfaLoading(false);
-      }
-    };
-
     if (user && !loadingRef.current) {
       loadSettings();
     }
     
     return () => {
       // Reset for next mount
-      loadingRef.current = false;
       locationStateProcessedRef.current = false;
     };
-  }, [user, setUser, setError, location.state]);
+  }, [user, setUser, loadSettings, location.state]);
 
-  const handleTfaToggle = async () => {
-    console.log("TFA toggle clicked, current state:", tfaEnabled);
-    
+  const handleTfaToggle = () => {
     // Don't set loading state if we're just navigating to setup page
     if (!tfaEnabled) {
       navigate('/verify-2fa', { 
@@ -97,19 +98,23 @@ const UserProfile = () => {
       return;
     }
     
-    // Only set loading state when actually performing an API call
+    // Show confirmation dialog when disabling 2FA
+    setDisableTfaDialogOpen(true);
+  };
+
+  const handleConfirmDisableTfa = async () => {
+    // Close the dialog and set loading state
+    setDisableTfaDialogOpen(false);
     setTfaLoading(true);
     
     try {      
       // Disabling TFA
-      console.log("Disabling TFA...");
-      const updatedSettings = await updateTfaSettings(false);
-      console.log("TFA disable API response:", updatedSettings);
+      await updateTfaSettings(false);
       
-      // Update local state first
+      // Immediately update UI state
       setTfaEnabled(false);
       
-      // Then update user context once with all changes
+      // Update user context
       if (user) {
         setUser({
           ...user,
@@ -122,9 +127,7 @@ const UserProfile = () => {
       setAlertSeverity('success');
       setAlertOpen(true);
       
-      console.log("TFA disabled, new state:", false);
-      
-      // Force a re-render
+      // Force a re-render with a new key to refresh the component
       setRenderKey(Date.now());
     } catch (error) {
       console.error("Error updating TFA settings:", error);
@@ -133,8 +136,15 @@ const UserProfile = () => {
       setAlertSeverity('error');
       setAlertOpen(true);
     } finally {
-      setTfaLoading(false);
+      // Ensure loading state is reset
+      setTimeout(() => {
+        setTfaLoading(false);
+      }, 100);
     }
+  };
+
+  const handleCancelDisableTfa = () => {
+    setDisableTfaDialogOpen(false);
   };
 
   const setupTfa = () => {
@@ -181,47 +191,22 @@ const UserProfile = () => {
     setAlertOpen(false);
   };
 
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container component="main" maxWidth="xs">
-        <Typography color="error" variant="body1">
-          {error}
-        </Typography>
-      </Container>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  const getInitials = (name: string): string => {
-    return name
-      .split(' ')
-      .map((part: string) => part[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  };
-
-  const renderTfaCard = () => {
+  // Memoize the TFA card to prevent unnecessary re-renders
+  const renderTfaCard = useCallback(() => {
     const cardStyle = {
       mb: 3,
       borderRadius: 2,
-      boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
       border: '1px solid',
       borderColor: tfaEnabled ? theme.palette.success.light : alpha(theme.palette.primary.main, 0.2),
       position: 'relative',
       overflow: 'hidden',
-      transition: 'all 0.3s ease'
+      transition: 'all 0.3s ease',
+      transform: tfaEnabled ? 'translateY(-4px)' : 'none',
+      '&:hover': {
+        transform: 'translateY(-8px)',
+        boxShadow: '0 12px 28px rgba(0,0,0,0.12)',
+      }
     };
 
     if (tfaLoading) {
@@ -253,23 +238,24 @@ const UserProfile = () => {
             height: '150px',
             borderRadius: '50%',
             background: tfaEnabled
-              ? 'radial-gradient(circle, rgba(76,175,80,0.08) 0%, rgba(76,175,80,0) 70%)'
-              : 'radial-gradient(circle, rgba(63,81,181,0.08) 0%, rgba(63,81,181,0) 70%)',
+              ? 'radial-gradient(circle, rgba(76,175,80,0.12) 0%, rgba(76,175,80,0) 70%)'
+              : 'radial-gradient(circle, rgba(63,81,181,0.12) 0%, rgba(63,81,181,0) 70%)',
             top: '-75px',
             right: '-75px',
             zIndex: 0,
             transition: 'background 0.3s ease-in-out'
           }}
         />
-        <CardContent sx={{ position: 'relative', zIndex: 1 }}>
+        <CardContent sx={{ position: 'relative', zIndex: 1, p: 3 }}>
           <Box display="flex" alignItems="center" mb={2}>
             <Box display="flex" alignItems="center">
               <Security 
                 color={tfaEnabled ? "success" : "action"} 
                 sx={{ 
                   mr: 1.5, 
-                  fontSize: 28,
-                  transition: 'color 0.3s ease-in-out' 
+                  fontSize: 32,
+                  transition: 'color 0.3s ease-in-out',
+                  filter: tfaEnabled ? 'drop-shadow(0 2px 4px rgba(76,175,80,0.4))' : 'none'
                 }} 
               />
               <Typography variant="h6" fontWeight={600} color="text.primary">
@@ -278,7 +264,7 @@ const UserProfile = () => {
             </Box>
           </Box>
           
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.6 }}>
             {tfaEnabled
               ? "Your account is protected with two-factor authentication. Each time you sign in, you'll need to provide a one-time code from your authenticator app."
               : "Enable two-factor authentication to add an extra layer of security to your account. You'll need an authenticator app on your phone."}
@@ -287,13 +273,19 @@ const UserProfile = () => {
           {!tfaEnabled && (
             <Button
               startIcon={<QrCode2 />}
-              variant="outlined"
+              variant="contained"
+              color="primary"
               onClick={handleTfaToggle}
               sx={{ 
                 mt: 1,
                 borderRadius: '8px',
                 textTransform: 'none',
-                px: 2
+                px: 3,
+                py: 1,
+                boxShadow: '0 4px 12px rgba(63,81,181,0.2)',
+                '&:hover': {
+                  boxShadow: '0 6px 16px rgba(63,81,181,0.3)',
+                }
               }}
             >
               Enable Two-Factor Authentication
@@ -305,13 +297,14 @@ const UserProfile = () => {
               <Box sx={{ 
                 display: 'flex', 
                 alignItems: 'center', 
-                p: 1.5, 
-                borderRadius: 1.5, 
-                bgcolor: 'success.light', 
-                color: 'white',
-                mb: 2
+                p: 2, 
+                borderRadius: 2, 
+                bgcolor: alpha(theme.palette.success.light, 0.15), 
+                color: theme.palette.success.dark,
+                mb: 2,
+                border: `1px solid ${alpha(theme.palette.success.main, 0.3)}`
               }}>
-                <CheckCircle sx={{ mr: 1 }} />
+                <CheckCircle sx={{ mr: 1.5, color: theme.palette.success.main }} />
                 <Typography variant="body2" fontWeight={500}>
                   Your account is protected with 2FA
                 </Typography>
@@ -319,12 +312,17 @@ const UserProfile = () => {
               
               <Divider sx={{ my: 2 }} />
               
-              <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 <Button
                   variant="outlined"
                   color="primary"
+                  startIcon={<QrCode2 />}
                   onClick={setupTfa}
-                  sx={{ textTransform: 'none', borderRadius: '8px' }}
+                  sx={{ 
+                    textTransform: 'none', 
+                    borderRadius: '8px',
+                    py: 1
+                  }}
                 >
                   Reconfigure Two-Factor Authentication
                 </Button>
@@ -332,8 +330,13 @@ const UserProfile = () => {
                 <Button
                   variant="outlined"
                   color="error"
+                  startIcon={<Warning />}
                   onClick={handleTfaToggle}
-                  sx={{ textTransform: 'none', borderRadius: '8px' }}
+                  sx={{ 
+                    textTransform: 'none', 
+                    borderRadius: '8px',
+                    py: 1
+                  }}
                 >
                   Disable Two-Factor Authentication
                 </Button>
@@ -343,7 +346,38 @@ const UserProfile = () => {
         </CardContent>
       </Card>
     );
+  }, [tfaEnabled, tfaLoading, theme, handleTfaToggle, setupTfa]);
+
+  const getInitials = (name: string): string => {
+    return name
+      .split(' ')
+      .map((part: string) => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
   };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container component="main" maxWidth="xs">
+        <Typography color="error" variant="body1">
+          {error}
+        </Typography>
+      </Container>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div>
@@ -351,41 +385,55 @@ const UserProfile = () => {
         minHeight: '100vh', 
         background: 'linear-gradient(145deg, #f0f4ff 0%, #f5f5f5 100%)',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        pb: 6
       }}>
+        {/* Background decorative elements */}
+        <Box sx={{
+          position: 'absolute',
+          width: '400px',
+          height: '400px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(121,134,203,0.15) 0%, rgba(121,134,203,0) 70%)',
+          top: '-150px',
+          right: '-150px',
+          zIndex: 0
+        }} />
+        
         <Box sx={{
           position: 'absolute',
           width: '300px',
           height: '300px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(121,134,203,0.2) 0%, rgba(121,134,203,0) 70%)',
-          top: '-120px',
-          right: '-100px',
-          zIndex: 0
-        }} />
-        
-        <Box sx={{
-          position: 'absolute',
-          width: '250px',
-          height: '250px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(63,81,181,0.15) 0%, rgba(63,81,181,0) 70%)',
+          background: 'radial-gradient(circle, rgba(63,81,181,0.1) 0%, rgba(63,81,181,0) 70%)',
           bottom: '50px',
           left: '-100px',
           zIndex: 0
         }} />
         
+        <Box sx={{
+          position: 'absolute',
+          width: '200px',
+          height: '200px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(63,81,181,0.08) 0%, rgba(63,81,181,0) 70%)',
+          top: '30%',
+          left: '15%',
+          zIndex: 0
+        }} />
+        
+        {/* Header */}
         <AppBar 
           position="static" 
           elevation={0}
           sx={{ 
             background: 'linear-gradient(90deg, #3f51b5 0%, #5c6bc0 100%)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-            mb: 0,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            mb: 4,
             position: 'relative',
             overflow: 'hidden',
             height: 'auto',
-            borderRadius: '0 0 20px 20px'
+            borderRadius: {xs: '0 0 16px 16px', sm: '0 0 24px 24px'}
           }}
         >
           <Box 
@@ -400,192 +448,299 @@ const UserProfile = () => {
             }} 
           />
           
-          <Toolbar sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center' }}>
-            <div>
-              <IconButton
-                edge="start"
-                color="inherit"
-                onClick={handleBack}
-                aria-label="back to dashboard"
-                sx={{ 
-                  mr: 2, 
-                  bgcolor: 'rgba(255,255,255,0.1)',
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    bgcolor: 'rgba(255,255,255,0.2)',
-                  }
-                }}
-              >
-                <ArrowBack />
-              </IconButton>
-            </div>
-            <div>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  flexGrow: 1, 
-                  fontWeight: 600,
-                  letterSpacing: '0.5px',
-                }}
-              >
-                User Profile
-              </Typography>
-            </div>
+          <Box 
+            sx={{ 
+              position: 'absolute', 
+              bottom: -60, 
+              left: '30%', 
+              width: 150, 
+              height: 150, 
+              borderRadius: '50%', 
+              background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)', 
+            }} 
+          />
+          
+          <Toolbar sx={{ px: {xs: 2, sm: 3}, py: {xs: 1.5, sm: 2}, display: 'flex', alignItems: 'center' }}>
+            <IconButton
+              edge="start"
+              color="inherit"
+              onClick={handleBack}
+              aria-label="back to dashboard"
+              sx={{ 
+                mr: 2, 
+                bgcolor: 'rgba(255,255,255,0.1)',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  bgcolor: 'rgba(255,255,255,0.2)',
+                }
+              }}
+            >
+              <ArrowBack />
+            </IconButton>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                flexGrow: 1, 
+                fontWeight: 600,
+                letterSpacing: '0.5px',
+              }}
+            >
+              User Profile
+            </Typography>
+            
+            <Chip
+              icon={<Verified sx={{ fontSize: 16, color: 'white !important' }} />}
+              label={user.role || 'User'}
+              size="small"
+              sx={{
+                bgcolor: 'rgba(255,255,255,0.2)',
+                color: 'white',
+                fontWeight: 500,
+                border: '1px solid rgba(255,255,255,0.3)',
+                '& .MuiChip-icon': {
+                  color: 'white'
+                }
+              }}
+            />
           </Toolbar>
         </AppBar>
 
-        <Container maxWidth="md" sx={{ py: 4, position: 'relative', zIndex: 1 }}>
-          <div>
-            <Paper 
-              elevation={0}
-              sx={{ 
-                p: 3, 
-                borderRadius: 4,
-                border: '1px solid',
-                borderColor: alpha(theme.palette.primary.main, 0.1),
-                mb: 3
-              }}
-            >
-              <Box display="flex" alignItems="center" mb={3}>
+        <Container maxWidth="md" sx={{ py: {xs: 2, sm: 4}, position: 'relative', zIndex: 1 }}>
+          {/* Profile Card */}
+          <Paper 
+            elevation={0}
+            sx={{ 
+              p: {xs: 2.5, sm: 3}, 
+              borderRadius: {xs: 3, sm: 4},
+              border: '1px solid',
+              borderColor: alpha(theme.palette.primary.main, 0.1),
+              mb: 4,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                boxShadow: '0 12px 36px rgba(0,0,0,0.12)',
+                transform: 'translateY(-4px)'
+              }
+            }}
+          >
+            <Grid container spacing={3} alignItems="center">
+              <Grid item xs={12} sm={4} sx={{display: 'flex', justifyContent: {xs: 'center', sm: 'flex-start'}}}>
                 <Avatar 
                   sx={{ 
-                    width: 80, 
-                    height: 80, 
+                    width: {xs: 100, sm: 120}, 
+                    height: {xs: 100, sm: 120}, 
                     bgcolor: theme.palette.primary.main,
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                    fontSize: '1.8rem',
-                    fontWeight: 'bold'
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                    fontSize: {xs: '2rem', sm: '2.5rem'},
+                    fontWeight: 'bold',
+                    border: '4px solid white'
                   }}
                 >
                   {getInitials(user.username || '')}
                 </Avatar>
-                <Box ml={3}>
-                  <Typography variant="h5" fontWeight={700} gutterBottom>
+              </Grid>
+              <Grid item xs={12} sm={8}>
+                <Box sx={{textAlign: {xs: 'center', sm: 'left'}}}>
+                  <Typography variant="h4" fontWeight={700} gutterBottom>
                     {user.username}
                   </Typography>
-                  <Typography 
-                    variant="body2" 
-                    color="textSecondary"
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 0.5
-                    }}
-                  >
-                    <Person fontSize="small" />
-                    {user.email || 'No email provided'}
+                  
+                  <Box sx={{display: 'flex', flexDirection: {xs: 'column', sm: 'row'}, gap: 2, mt: 2}}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        bgcolor: alpha(theme.palette.primary.main, 0.08),
+                        p: 1,
+                        px: 1.5,
+                        borderRadius: 2,
+                      }}
+                    >
+                      <Email fontSize="small" color="primary" />
+                      <Typography 
+                        variant="body2" 
+                        fontWeight={500}
+                      >
+                        {user.email || 'No email provided'}
+                      </Typography>
+                    </Box>
+                    
+                    {user.createdAt && (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          bgcolor: alpha(theme.palette.primary.main, 0.08),
+                          p: 1,
+                          px: 1.5,
+                          borderRadius: 2,
+                        }}
+                      >
+                        <AccountCircle fontSize="small" color="primary" />
+                        <Typography 
+                          variant="body2" 
+                          fontWeight={500}
+                        >
+                          Member since {new Date(user.createdAt).toLocaleDateString()}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </Box>
+              </Grid>
+            </Grid>
+          </Paper>
+
+          {/* Security Settings Section */}
+          <Box>
+            <Typography 
+              variant="h5" 
+              sx={{ 
+                mb: 3, 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1.5,
+                color: theme.palette.text.primary,
+                fontWeight: 700,
+                pb: 1,
+                borderBottom: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`
+              }}
+            >
+              <Shield fontSize="medium" color="primary" />
+              Security Settings
+            </Typography>
+            
+            {/* TFA Card - the key forces a complete re-render when it changes */}
+            <div key={`tfa-card-${tfaEnabled}-${renderKey}`}>
+              {renderTfaCard()}
+            </div>
+            
+            {/* Password Card */}
+            <Card 
+              sx={{ 
+                mb: 3, 
+                borderRadius: 2,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                border: '1px solid',
+                borderColor: alpha(theme.palette.primary.main, 0.2),
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  boxShadow: '0 12px 28px rgba(0,0,0,0.12)',
+                  transform: 'translateY(-4px)'
+                }
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box display="flex" alignItems="center" mb={2}>
+                  <VpnKey color="primary" sx={{ mr: 1.5, fontSize: 32 }} />
+                  <Typography variant="h6" fontWeight={600}>
+                    Password Management
                   </Typography>
                 </Box>
-              </Box>
-            </Paper>
-          </div>
-
-          <div>
-            <Box>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  mb: 2, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 1,
-                  color: theme.palette.text.primary,
-                  fontWeight: 600
-                }}
-              >
-                <Shield fontSize="small" />
-                Security Settings
-              </Typography>
-              
-              <div key={`tfa-card-${tfaEnabled}`}>
-                {renderTfaCard()}
-              </div>
-              
-              <Card 
-                sx={{ 
-                  mb: 3, 
-                  borderRadius: 2,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                  border: '1px solid',
-                  borderColor: alpha(theme.palette.primary.main, 0.2)
-                }}
-              >
-                <CardContent>
-                  <Box display="flex" alignItems="center" mb={2}>
-                    <VpnKey color="primary" sx={{ mr: 1.5, fontSize: 28 }} />
-                    <Typography variant="h6" fontWeight={600}>
-                      Password Management
-                    </Typography>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Change your password to keep your account secure. We recommend using a strong, unique password.
+                <Typography variant="body2" color="text.secondary" sx={{lineHeight: 1.6}} gutterBottom>
+                  Change your password to keep your account secure. We recommend using a strong, unique password that includes a mix of letters, numbers, and special characters.
+                </Typography>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handlePasswordReset}
+                  disabled={passwordResetRequested}
+                  sx={{ 
+                    mt: 2,
+                    borderRadius: '8px',
+                    textTransform: 'none',
+                    px: 3,
+                    py: 1,
+                    boxShadow: '0 4px 12px rgba(63,81,181,0.2)',
+                    '&:hover': {
+                      boxShadow: '0 6px 16px rgba(63,81,181,0.3)',
+                    },
+                    bgcolor: passwordResetRequested ? alpha(theme.palette.primary.main, 0.7) : theme.palette.primary.main
+                  }}
+                >
+                  {passwordResetRequested ? 'Password Reset Email Sent' : 'Reset Password'}
+                </Button>
+              </CardContent>
+            </Card>
+            
+            {/* Danger Zone Card */}
+            <Card 
+              sx={{ 
+                borderRadius: 2,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                border: '1px solid',
+                borderColor: alpha(theme.palette.error.main, 0.2),
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  boxShadow: '0 12px 28px rgba(0,0,0,0.12)',
+                }
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box display="flex" alignItems="center" mb={2}>
+                  <DeleteForever color="error" sx={{ mr: 1.5, fontSize: 32 }} />
+                  <Typography variant="h6" fontWeight={600} color="error.main">
+                    Danger Zone
                   </Typography>
-                  <Button
-                    variant="outlined"
-                    onClick={handlePasswordReset}
-                    disabled={passwordResetRequested}
-                    sx={{ 
-                      mt: 2,
-                      borderRadius: '8px',
-                      textTransform: 'none'
-                    }}
-                  >
-                    {passwordResetRequested ? 'Password Reset Email Sent' : 'Reset Password'}
-                  </Button>
-                </CardContent>
-              </Card>
-              
-              <Card 
-                sx={{ 
-                  borderRadius: 2,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                  border: '1px solid',
-                  borderColor: alpha(theme.palette.error.main, 0.2)
-                }}
-              >
-                <CardContent>
-                  <Box display="flex" alignItems="center" mb={2}>
-                    <DeleteForever color="error" sx={{ mr: 1.5, fontSize: 28 }} />
-                    <Typography variant="h6" fontWeight={600} color="error.main">
-                      Danger Zone
-                    </Typography>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Once you delete your account, all of your data will be permanently removed. This action cannot be undone.
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    onClick={() => setDeleteDialogOpen(true)}
-                    sx={{ 
-                      mt: 2,
-                      borderRadius: '8px',
-                      textTransform: 'none'
-                    }}
-                  >
-                    Delete My Account
-                  </Button>
-                </CardContent>
-              </Card>
-            </Box>
-          </div>
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{lineHeight: 1.6}} gutterBottom>
+                  Once you delete your account, all of your data will be permanently removed. This action cannot be undone. Please make sure you want to proceed.
+                </Typography>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => setDeleteDialogOpen(true)}
+                  sx={{ 
+                    mt: 2,
+                    borderRadius: '8px',
+                    textTransform: 'none',
+                    px: 3,
+                    py: 1,
+                    borderWidth: '1.5px'
+                  }}
+                >
+                  Delete My Account
+                </Button>
+              </CardContent>
+            </Card>
+          </Box>
         </Container>
 
+        {/* Delete Account Dialog */}
         <Dialog
           open={deleteDialogOpen}
           onClose={() => setDeleteDialogOpen(false)}
           aria-labelledby="delete-dialog-title"
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              p: 1
+            }
+          }}
         >
-          <DialogTitle id="delete-dialog-title">
+          <DialogTitle id="delete-dialog-title" sx={{fontWeight: 600}}>
             Delete your account?
           </DialogTitle>
           <DialogContent>
-            <Typography variant="body2">
-              This action cannot be undone. All of your data will be permanently deleted.
+            <Typography variant="body1" sx={{mb: 1}}>
+              This action cannot be undone. Are you absolutely sure?
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              All of your data, including profile information, settings, and activity history will be permanently deleted.
             </Typography>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
+          <DialogActions sx={{px: 3, pb: 2}}>
+            <Button 
+              onClick={() => setDeleteDialogOpen(false)} 
+              color="primary" 
+              variant="outlined"
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none'
+              }}
+            >
               Cancel
             </Button>
             <Button 
@@ -600,13 +755,76 @@ const UserProfile = () => {
                 }
               }} 
               color="error"
+              variant="contained"
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                boxShadow: '0 4px 12px rgba(211,47,47,0.2)'
+              }}
             >
-              Delete
+              Delete Permanently
             </Button>
           </DialogActions>
         </Dialog>
 
-        {/* Replace Snackbar with a custom alert implementation */}
+        {/* 2FA Disable Confirmation Dialog */}
+        <Dialog
+          open={disableTfaDialogOpen}
+          onClose={handleCancelDisableTfa}
+          aria-labelledby="disable-tfa-dialog-title"
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              p: 1
+            }
+          }}
+        >
+          <DialogTitle id="disable-tfa-dialog-title" sx={{fontWeight: 600}}>
+            Disable Two-Factor Authentication?
+          </DialogTitle>
+          <DialogContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
+              <Warning color="warning" sx={{ fontSize: 32 }} />
+              <Typography variant="body1" color="warning.dark" fontWeight={500}>
+                This will reduce the security of your account.
+              </Typography>
+            </Box>
+            <Typography variant="body2" sx={{mb: 1}}>
+              Without two-factor authentication, you'll only need your password to sign in, making your account more vulnerable to security threats.
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Are you sure you want to disable two-factor authentication?
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{px: 3, pb: 2}}>
+            <Button 
+              onClick={handleCancelDisableTfa} 
+              color="primary" 
+              variant="outlined"
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none'
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleConfirmDisableTfa} 
+              color="error"
+              variant="contained"
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                boxShadow: '0 4px 12px rgba(211,47,47,0.2)'
+              }}
+              startIcon={<Security />}
+            >
+              Disable 2FA
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Custom Alert */}
         {alertOpen && (
           <Box
             sx={{
@@ -621,14 +839,15 @@ const UserProfile = () => {
           >
             <Box
               sx={{
-                bgcolor: alertSeverity === 'success' ? 'success.main' : 'error.main',
+                bgcolor: alertSeverity === 'success' ? theme.palette.success.main : theme.palette.error.main,
                 color: 'white',
                 p: 2,
                 borderRadius: 2,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between'
+                justifyContent: 'space-between',
+                animation: 'fadeInUp 0.3s ease-out'
               }}
             >
               <Typography variant="body2">

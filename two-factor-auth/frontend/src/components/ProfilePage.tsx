@@ -32,7 +32,9 @@ const ProfilePage: React.FC = () => {
                 setupMode: true,
                 tfaType: 'APP',
                 selectedMethod: 'APP',
-                fromProfile: true
+                fromProfile: true,
+                username: localStorage.getItem('username') || '',
+                skipMethodSelection: true
             } 
         });
     };

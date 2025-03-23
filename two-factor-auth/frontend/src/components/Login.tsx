@@ -19,7 +19,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  DialogContentText
+  DialogContentText,
+  Divider,
+  Avatar
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -35,7 +37,8 @@ import {
   Security,
   ArrowForward,
   VpnKey,
-  Email
+  Email,
+  Login as LoginIcon
 } from '@mui/icons-material';
 
 const Login: React.FC = () => {
@@ -183,24 +186,41 @@ const Login: React.FC = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.dark, 0.2)} 0%, ${alpha(theme.palette.primary.main, 0.1)} 100%)`,
+        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.dark, 0.3)} 0%, ${alpha(theme.palette.primary.light, 0.1)} 100%)`,
         position: 'relative',
         overflow: 'hidden',
         pt: 4,
         pb: 8
       }}
     >
-      {/* Decorative background elements */}
+      {/* Enhanced decorative background elements */}
       <Box
         sx={{
           position: 'absolute',
-          width: '400px',
-          height: '400px',
+          width: '600px',
+          height: '600px',
           borderRadius: '50%',
           background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.2)} 0%, rgba(0,0,0,0) 70%)`,
-          top: '-100px',
-          right: '-100px',
-          zIndex: 0
+          top: '-200px',
+          right: '-200px',
+          zIndex: 0,
+          filter: 'blur(40px)',
+          opacity: 0.8
+        }}
+      />
+      
+      <Box
+        sx={{
+          position: 'absolute',
+          width: '500px',
+          height: '500px',
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${alpha(theme.palette.secondary.main, 0.15)} 0%, rgba(0,0,0,0) 70%)`,
+          bottom: '-150px',
+          left: '-150px',
+          zIndex: 0,
+          filter: 'blur(30px)',
+          opacity: 0.7
         }}
       />
       
@@ -210,10 +230,12 @@ const Login: React.FC = () => {
           width: '300px',
           height: '300px',
           borderRadius: '50%',
-          background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.15)} 0%, rgba(0,0,0,0) 70%)`,
-          bottom: '-50px',
-          left: '-50px',
-          zIndex: 0
+          background: `radial-gradient(circle, ${alpha(theme.palette.primary.dark, 0.1)} 0%, rgba(0,0,0,0) 70%)`,
+          top: '30%',
+          left: '10%',
+          zIndex: 0,
+          filter: 'blur(20px)',
+          opacity: 0.5
         }}
       />
 
@@ -221,57 +243,69 @@ const Login: React.FC = () => {
         <Container component="main" maxWidth="xs" sx={{ position: 'relative', zIndex: 1 }}>
           <Grow in={true} timeout={800} style={{ transformOrigin: '50% 0%' }}>
             <Paper
-              elevation={10}
+              elevation={16}
               sx={{
                 p: 4,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                borderRadius: 3,
-                background: 'rgba(255, 255, 255, 0.8)',
+                borderRadius: 4,
+                background: 'rgba(255, 255, 255, 0.9)',
                 backdropFilter: 'blur(10px)',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
+                boxShadow: '0 10px 40px rgba(0,0,0,0.15)'
               }}
             >
-              <Box
+              <Avatar
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  bgcolor: alpha(theme.palette.primary.main, 0.1),
-                  p: 2,
-                  borderRadius: '50%',
-                  mb: 2
+                  width: 80,
+                  height: 80,
+                  bgcolor: theme.palette.primary.main,
+                  boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.4)}`,
+                  mb: 3,
+                  transform: 'translateY(-60%)',
+                  position: 'absolute',
+                  border: `4px solid ${theme.palette.background.paper}`
                 }}
               >
-                <Security sx={{ fontSize: 40, color: theme.palette.primary.main }} />
+                <LoginIcon sx={{ fontSize: 40 }} />
+              </Avatar>
+
+              <Box sx={{ mt: 5, width: '100%', textAlign: 'center' }}>
+                <Typography
+                  component="h1"
+                  variant="h4"
+                  fontWeight="800"
+                  sx={{
+                    background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    MozBackgroundClip: 'text',
+                    MozTextFillColor: 'transparent',
+                    msBackgroundClip: 'text',
+                    color: 'transparent',
+                    textShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`,
+                    mb: 1
+                  }}
+                >
+                  Welcome Back
+                </Typography>
+
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 3 }}
+                >
+                  Sign in to access your secure account
+                </Typography>
               </Box>
-
-              <Typography
-                component="h1"
-                variant="h4"
-                fontWeight="700"
-                sx={{
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  MozBackgroundClip: 'text',
-                  MozTextFillColor: 'transparent',
-                  msBackgroundClip: 'text',
-                  color: 'transparent',
-                  mb: 1
-                }}
-              >
-                Welcome Back
-              </Typography>
-
 
               <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
                 <Fade in={!!successMessage} timeout={500}>
-                  <Box sx={{ mb: 2, display: successMessage ? 'block' : 'none' }}>
+                  <Box sx={{ mb: 3, display: successMessage ? 'block' : 'none' }}>
                     <Alert 
                       severity="success" 
+                      variant="filled"
                       sx={{ 
                         borderRadius: 2,
                         animation: 'pulse 2s infinite',
@@ -288,9 +322,10 @@ const Login: React.FC = () => {
                 </Fade>
 
                 <Fade in={!!error} timeout={500}>
-                  <Box sx={{ mb: 2, display: error ? 'block' : 'none' }}>
+                  <Box sx={{ mb: 3, display: error ? 'block' : 'none' }}>
                     <Alert 
                       severity="error" 
+                      variant="filled"
                       sx={{ 
                         borderRadius: 2,
                         animation: 'shake 0.5s ease-in-out',
@@ -326,11 +361,24 @@ const Login: React.FC = () => {
                     ),
                     sx: {
                       borderRadius: 2,
-                      bgcolor: alpha(theme.palette.background.paper, 0.5),
+                      bgcolor: alpha(theme.palette.background.paper, 0.8),
                       '&:hover': {
-                        bgcolor: alpha(theme.palette.background.paper, 0.8)
+                        bgcolor: alpha(theme.palette.background.paper, 1)
                       },
-                      transition: 'all 0.3s ease'
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                    }
+                  }}
+                  sx={{
+                    mb: 2,
+                    '& .MuiInputLabel-root': {
+                      color: theme.palette.text.secondary
+                    },
+                    '& .MuiOutlinedInput-root': {
+                      '&.Mui-focused fieldset': {
+                        borderColor: theme.palette.primary.main,
+                        borderWidth: 2
+                      }
                     }
                   }}
                 />
@@ -365,16 +413,29 @@ const Login: React.FC = () => {
                     ),
                     sx: {
                       borderRadius: 2,
-                      bgcolor: alpha(theme.palette.background.paper, 0.5),
+                      bgcolor: alpha(theme.palette.background.paper, 0.8),
                       '&:hover': {
-                        bgcolor: alpha(theme.palette.background.paper, 0.8)
+                        bgcolor: alpha(theme.palette.background.paper, 1)
                       },
-                      transition: 'all 0.3s ease'
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                    }
+                  }}
+                  sx={{
+                    mb: 1,
+                    '& .MuiInputLabel-root': {
+                      color: theme.palette.text.secondary
+                    },
+                    '& .MuiOutlinedInput-root': {
+                      '&.Mui-focused fieldset': {
+                        borderColor: theme.palette.primary.main,
+                        borderWidth: 2
+                      }
                     }
                   }}
                 />
 
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
                   <Link
                     component="button"
                     type="button"
@@ -383,7 +444,7 @@ const Login: React.FC = () => {
                     sx={{
                       textDecoration: 'none',
                       color: theme.palette.primary.main,
-                      fontWeight: 500,
+                      fontWeight: 600,
                       transition: 'all 0.2s ease',
                       '&:hover': {
                         textDecoration: 'underline',
@@ -395,7 +456,11 @@ const Login: React.FC = () => {
                   </Link>
                 </Box>
 
-                <Box sx={{ mt: 3, mb: 3, display: 'flex', justifyContent: 'center' }}>
+                <Divider sx={{ my: 2, opacity: 0.6 }}>
+                  <Typography variant="caption" color="text.secondary">SECURITY CHECK</Typography>
+                </Divider>
+
+                <Box sx={{ mt: 2, mb: 3, display: 'flex', justifyContent: 'center' }}>
                   {siteKey && (
                     <ReCAPTCHA
                       ref={recaptchaRef}
@@ -411,38 +476,45 @@ const Login: React.FC = () => {
                   variant="contained"
                   disabled={loading || !captchaToken}
                   sx={{
-                    mt: 2,
+                    mt: 1,
                     mb: 2,
-                    py: 1.2,
-                    borderRadius: 6,
+                    py: 1.5,
+                    borderRadius: 8,
                     position: 'relative',
                     overflow: 'hidden',
                     textTransform: 'none',
-                    fontWeight: 600,
-                    fontSize: '1rem',
-                    backgroundColor: theme.palette.primary.main,
+                    fontWeight: 700,
+                    fontSize: '1.1rem',
+                    letterSpacing: 0.5,
+                    boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.5)}`,
                     '&:hover': {
-                      backgroundColor: theme.palette.primary.dark,
+                      boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.6)}`,
+                      transform: 'translateY(-2px)'
                     },
+                    transition: 'all 0.3s ease',
+                    background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`
                   }}
                 >
                   {loading ? (
                     <CircularProgress size={24} color="inherit" />
                   ) : (
                     <>
-                      Sign In <ArrowForward sx={{ ml: 1, fontSize: '1rem' }} />
+                      Sign In <ArrowForward sx={{ ml: 1, fontSize: '1.1rem' }} />
                     </>
                   )}
                 </Button>
 
-                <Box sx={{ textAlign: 'center', mt: 2 }}>
+                <Box sx={{ textAlign: 'center', mt: 3 }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    Don't have an account?
+                  </Typography>
                   <Link 
                     href="/register" 
                     variant="body2"
                     sx={{
                       textDecoration: 'none',
                       color: theme.palette.primary.main,
-                      fontWeight: 500,
+                      fontWeight: 700,
                       transition: 'all 0.2s ease',
                       '&:hover': {
                         textDecoration: 'underline',
@@ -450,7 +522,7 @@ const Login: React.FC = () => {
                       }
                     }}
                   >
-                    {"Don't have an account? Sign Up"}
+                    Create a new account
                   </Link>
                 </Box>
               </Box>
@@ -459,130 +531,105 @@ const Login: React.FC = () => {
         </Container>
       </Fade>
 
-      {/* Forgot Password Dialog */}
+      {/* Password Recovery Dialog */}
       <Dialog 
         open={forgotPasswordOpen} 
-        onClose={forgotPasswordSuccess ? handleForgotPasswordClose : undefined}
-        maxWidth="sm"
+        onClose={!forgotPasswordLoading ? handleForgotPasswordClose : undefined}
+        maxWidth="xs"
         fullWidth
         PaperProps={{
           sx: {
             borderRadius: 3,
-            boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-            background: 'rgba(255,255,255,0.95)',
-            backdropFilter: 'blur(10px)'
+            boxShadow: '0 12px 36px rgba(0,0,0,0.2)',
+            p: 1
           }
         }}
       >
-        <DialogTitle sx={{ 
-          pb: 1, 
-          pt: 3,
-          fontWeight: 600,
-        }}>
-          {forgotPasswordSuccess ? 'Password Reset Email Sent' : 'Reset Your Password'}
+        <DialogTitle sx={{ fontWeight: 700, pt: 3 }}>
+          Password Recovery
         </DialogTitle>
         <DialogContent>
-          {forgotPasswordSuccess ? (
-            <Box sx={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              py: 3 
-            }}>
-              <Email sx={{ 
-                fontSize: 60, 
-                color: 'success.main', 
-                mb: 2 
-              }} />
-              <DialogContentText sx={{ textAlign: 'center', mb: 2 }}>
-                We've sent password reset instructions to your registered email address.
-                Please check your inbox (and spam folder) and follow the instructions to reset your password.
-              </DialogContentText>
-              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', fontSize: '0.85rem' }}>
-                The reset link will expire in 30 minutes for security reasons.
-                If you don't receive an email within a few minutes, please try again with your correct username or email address.
-              </Typography>
-            </Box>
-          ) : (
+          {!forgotPasswordSuccess ? (
             <>
-              <DialogContentText sx={{ mb: 2, mt: 1 }}>
-                Enter your username or email address to receive a password reset link.
-                If the account exists in our system, you'll receive an email with instructions to reset your password.
+              <DialogContentText sx={{ mb: 2 }}>
+                Please enter your username or email address. We'll send you a link to reset your password.
               </DialogContentText>
-              {forgotPasswordError && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                  {forgotPasswordError}
-                </Alert>
-              )}
               <TextField
                 autoFocus
                 margin="dense"
                 id="forgotPasswordEmail"
-                label="Username or Email Address"
+                label="Username or Email"
                 type="text"
                 fullWidth
                 value={forgotPasswordEmail}
                 onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                disabled={forgotPasswordLoading}
+                error={!!forgotPasswordError}
+                helperText={forgotPasswordError}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Person color="primary" />
+                      <Email color="primary" />
                     </InputAdornment>
-                  ),
-                  sx: {
-                    borderRadius: 2,
+                  )
+                }}
+                sx={{
+                  mt: 1,
+                  '& .MuiInputBase-root': {
+                    borderRadius: 2
                   }
                 }}
               />
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
-                Note: For security reasons, we will not indicate whether an account exists.
-                Reset links are only sent to registered email addresses.
-              </Typography>
             </>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          {forgotPasswordSuccess ? (
-            <Button 
-              onClick={handleForgotPasswordClose}
-              variant="contained"
-              fullWidth
+          ) : (
+            <Alert 
+              severity="success" 
+              variant="filled"
               sx={{ 
+                my: 2,
                 borderRadius: 2,
-                py: 1.2,
-                textTransform: 'none',
-                fontWeight: 600
+                alignItems: 'center',
+                animation: 'pulse 2s infinite',
+                '@keyframes pulse': {
+                  '0%': { boxShadow: '0 0 0 0 rgba(67, 160, 71, 0.4)' },
+                  '70%': { boxShadow: '0 0 0 10px rgba(67, 160, 71, 0)' },
+                  '100%': { boxShadow: '0 0 0 0 rgba(67, 160, 71, 0)' }
+                }
               }}
             >
-              Return to Login
+              Password reset email has been sent! Please check your inbox and follow the instructions to reset your password.
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 3, pt: 0 }}>
+          <Button
+            onClick={handleForgotPasswordClose}
+            color="inherit"
+            disabled={forgotPasswordLoading}
+            sx={{ 
+              textTransform: 'none',
+              fontWeight: 600,
+              borderRadius: 6
+            }}
+          >
+            {forgotPasswordSuccess ? 'Close' : 'Cancel'}
+          </Button>
+          {!forgotPasswordSuccess && (
+            <Button 
+              onClick={handleForgotPasswordSubmit}
+              color="primary"
+              variant="contained"
+              disabled={forgotPasswordLoading}
+              sx={{ 
+                textTransform: 'none',
+                fontWeight: 600,
+                borderRadius: 6,
+                px: 2
+              }}
+              startIcon={forgotPasswordLoading ? <CircularProgress size={20} color="inherit" /> : <VpnKey />}
+            >
+              Send Reset Link
             </Button>
-          ) : (
-            <>
-              <Button 
-                onClick={handleForgotPasswordClose}
-                sx={{ 
-                  textTransform: 'none',
-                  fontWeight: 500,
-                  borderRadius: 2,
-                }}
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleForgotPasswordSubmit}
-                variant="contained"
-                disabled={forgotPasswordLoading}
-                startIcon={forgotPasswordLoading ? <CircularProgress size={20} /> : <VpnKey />}
-                sx={{ 
-                  px: 3,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 600
-                }}
-              >
-                Send Reset Link
-              </Button>
-            </>
           )}
         </DialogActions>
       </Dialog>
