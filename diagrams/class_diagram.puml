@@ -1,0 +1,242 @@
+@startuml TwoFactorAuthClassDiagram
+
+skinparam classAttributeIconSize 0
+skinparam backgroundColor white
+skinparam classBorderColor #333333
+skinparam classBackgroundColor #F8F8F8
+skinparam arrowColor #666666
+skinparam packageBorderColor #999999
+skinparam stereotypeCBackgroundColor #ADD1B2
+
+title Two-Factor Authentication System - Class Diagram
+
+' Entities/Models
+package "Entities" {
+  class User {
+    -id: Long
+    -username: String
+    -email: String
+    -password: String
+    -enabled: boolean
+    -emailVerified: boolean
+    -createdAt: LocalDateTime
+    -updatedAt: LocalDateTime
+    +getId(): Long
+    +getUsername(): String
+    +getEmail(): String
+    +setPassword(password: String): void
+    +isEnabled(): boolean
+    +isEmailVerified(): boolean
+  }
+  
+  class TFAConfig {
+    -id: Long
+    -user: User
+    -enabled: boolean
+    -secret: String
+    -tfaType: TFAType
+    -createdAt: LocalDateTime
+    -updatedAt: LocalDateTime
+    +isEnabled(): boolean
+    +getSecret(): String
+    +getTfaType(): TFAType
+  }
+  
+  enum TFAType {
+    TOTP
+  }
+  
+  class PasswordResetToken {
+    -id: Long
+    -user: User
+    -token: String
+    -expiryDate: LocalDateTime
+    -used: boolean
+    +isValid(): boolean
+    +isExpired(): boolean
+    +markAsUsed(): void
+  }
+}
+
+' Data Transfer Objects
+package "DTOs" {
+  class LoginRequest {
+    -usernameOrEmail: String
+    -password: String
+    -tfaCode: String
+  }
+  
+  class RegistrationRequest {
+    -username: String
+    -email: String
+    -password: String
+    -confirmPassword: String
+    -recaptchaResponse: String
+  }
+  
+  class TFASetupResponse {
+    -qrCodeUrl: String
+    -secret: String
+  }
+  
+  class PasswordResetRequest {
+    -email: String
+  }
+  
+  class PasswordChangeRequest {
+    -oldPassword: String
+    -newPassword: String
+    -confirmPassword: String
+  }
+  
+  class UserProfileResponse {
+    -id: Long
+    -username: String
+    -email: String
+    -tfaEnabled: boolean
+    -createdAt: LocalDateTime
+  }
+  
+  class AuthResponse {
+    -token: String
+    -tokenType: String
+    -requiresTfa: boolean
+    -userInfo: UserProfileResponse
+  }
+}
+
+' Controllers
+package "Controllers" {
+  class AuthController {
+    -authService: AuthService
+    -userService: UserService
+    -emailService: EmailService
+    -totpService: TOTPService
+    +login(loginRequest: LoginRequest): ResponseEntity<AuthResponse>
+    +register(registrationRequest: RegistrationRequest): ResponseEntity<?>
+    +verifyEmail(token: String): ResponseEntity<?>
+    +setupTFA(): ResponseEntity<TFASetupResponse>
+    +verifyTFA(code: String): ResponseEntity<AuthResponse>
+    +disableTFA(password: String): ResponseEntity<?>
+  }
+  
+  class UserProfileController {
+    -userService: UserService
+    +getProfile(): ResponseEntity<UserProfileResponse>
+    +updateProfile(profileRequest: UpdateProfileRequest): ResponseEntity<?>
+  }
+  
+  class PasswordResetController {
+    -userService: UserService
+    -emailService: EmailService
+    +requestReset(resetRequest: PasswordResetRequest): ResponseEntity<?>
+    +validateToken(token: String): ResponseEntity<?>
+    +resetPassword(token: String, passwordRequest: PasswordChangeRequest): ResponseEntity<?>
+  }
+}
+
+' Services
+package "Services" {
+  interface UserService {
+    +findByUsername(username: String): User
+    +findByEmail(email: String): User
+    +register(request: RegistrationRequest): User
+    +updateProfile(user: User, request: UpdateProfileRequest): User
+    +changePassword(user: User, oldPassword: String, newPassword: String): boolean
+    +createPasswordResetToken(email: String): PasswordResetToken
+    +validatePasswordResetToken(token: String): boolean
+    +resetPassword(token: String, newPassword: String): boolean
+  }
+  
+  interface AuthService {
+    +authenticate(usernameOrEmail: String, password: String): Authentication
+    +generateToken(authentication: Authentication): String
+    +validateToken(token: String): boolean
+    +getCurrentUser(): User
+  }
+  
+  interface TOTPService {
+    +generateSecret(): String
+    +generateQrCodeUrl(user: User, secret: String): String
+    +validateCode(secret: String, code: String): boolean
+    +enableTFAForUser(user: User, secret: String): void
+    +disableTFAForUser(user: User): void
+  }
+  
+  interface EmailService {
+    +sendVerificationEmail(user: User, token: String): void
+    +sendPasswordResetEmail(user: User, token: String): void
+    +sendTFADisabledEmail(user: User): void
+  }
+}
+
+' Repositories
+package "Repositories" {
+  interface UserRepository {
+    +findByUsername(username: String): Optional<User>
+    +findByEmail(email: String): Optional<User>
+    +save(user: User): User
+    +existsByUsername(username: String): boolean
+    +existsByEmail(email: String): boolean
+  }
+  
+  interface TFAConfigRepository {
+    +findByUser(user: User): Optional<TFAConfig>
+    +save(tfaConfig: TFAConfig): TFAConfig
+  }
+  
+  interface PasswordResetTokenRepository {
+    +findByToken(token: String): Optional<PasswordResetToken>
+    +save(token: PasswordResetToken): PasswordResetToken
+    +deleteByExpiryDateBefore(date: LocalDateTime): void
+  }
+}
+
+' Security
+package "Security" {
+  class JwtTokenProvider {
+    -jwtSecret: String
+    -jwtExpirationInMs: int
+    +generateToken(authentication: Authentication): String
+    +getUserIdFromJWT(token: String): Long
+    +validateToken(token: String): boolean
+  }
+  
+  class JwtAuthenticationFilter {
+    -tokenProvider: JwtTokenProvider
+    -userDetailsService: UserDetailsService
+    +doFilterInternal(): void
+  }
+  
+  class CustomUserDetailsService {
+    -userRepository: UserRepository
+    +loadUserByUsername(usernameOrEmail: String): UserDetails
+  }
+}
+
+' Relationships
+User "1" -- "1" TFAConfig : has >
+User "1" -- "*" PasswordResetToken : has >
+TFAConfig -- TFAType : uses >
+
+AuthController -- AuthService : uses >
+AuthController -- TOTPService : uses >
+AuthController -- UserService : uses >
+AuthController -- EmailService : uses >
+
+UserProfileController -- UserService : uses >
+PasswordResetController -- UserService : uses >
+PasswordResetController -- EmailService : uses >
+
+UserService -- UserRepository : uses >
+UserService -- TFAConfigRepository : uses >
+UserService -- PasswordResetTokenRepository : uses >
+
+TOTPService -- TFAConfigRepository : uses >
+AuthService -- JwtTokenProvider : uses >
+AuthService -- CustomUserDetailsService : uses >
+
+JwtAuthenticationFilter -- JwtTokenProvider : uses >
+JwtAuthenticationFilter -- CustomUserDetailsService : uses >
+
+@enduml 

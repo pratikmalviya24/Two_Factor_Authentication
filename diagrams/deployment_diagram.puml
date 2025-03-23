@@ -1,0 +1,157 @@
+@startuml DeploymentDiagram
+
+' Title of the diagram
+title "Two-Factor Authentication System - Deployment Diagram"
+
+' Style and theme settings
+skinparam backgroundColor white
+skinparam nodeSep 40
+skinparam rankSep 60
+skinparam node {
+  backgroundColor white
+  borderColor #4682B4
+  fontColor black
+}
+skinparam artifact {
+  backgroundColor white
+  borderColor #4682B4
+}
+skinparam database {
+  backgroundColor white
+  borderColor #4682B4
+}
+skinparam cloud {
+  backgroundColor white
+  borderColor #4682B4
+}
+
+' Nodes and artifacts
+node "Client Device" as client {
+  artifact "Web Browser" as browser {
+    artifact "React SPA" as reactApp
+  }
+}
+
+node "CDN" as cdn {
+  artifact "Static Assets" as staticAssets
+  artifact "JavaScript Bundles" as jsBundles
+}
+
+node "Frontend Server" as frontendServer {
+  node "NGINX" as nginx {
+    artifact "React Build" as reactBuild
+  }
+}
+
+node "Load Balancer" as loadBalancer {
+  artifact "NGINX/HAProxy" as lbSoftware
+}
+
+node "API Server Cluster" as apiCluster {
+  node "API Server 1" as apiServer1 {
+    artifact "Spring Boot Application" as springApp1 {
+      artifact "2FA API" as api1
+    }
+  }
+  
+  node "API Server 2" as apiServer2 {
+    artifact "Spring Boot Application" as springApp2 {
+      artifact "2FA API" as api2
+    }
+  }
+}
+
+database "Database Cluster" as dbCluster {
+  database "Primary DB" as primaryDb {
+    artifact "User Tables" as userTablesP
+    artifact "2FA Tables" as tfaTablesP
+  }
+  
+  database "Replica DB" as replicaDb {
+    artifact "User Tables (Read-Only)" as userTablesR
+    artifact "2FA Tables (Read-Only)" as tfaTablesR
+  }
+}
+
+cloud "External Services" as externalServices {
+  node "Email Service" as emailService {
+    artifact "SMTP Server" as smtpServer
+  }
+  
+  node "Monitoring" as monitoring {
+    artifact "Prometheus" as prometheus
+    artifact "Grafana" as grafana
+  }
+  
+  node "Log Aggregation" as logging {
+    artifact "ELK Stack" as elk
+  }
+}
+
+' Connections
+client --> frontendServer : HTTPS
+client ..> cdn : HTTPS (asset fetching)
+client --> loadBalancer : HTTPS (API calls)
+
+frontendServer ..> cdn : Pull assets
+
+loadBalancer --> apiServer1 : HTTP (internal)
+loadBalancer --> apiServer2 : HTTP (internal)
+
+apiServer1 --> primaryDb : JDBC/SSL
+apiServer2 --> primaryDb : JDBC/SSL
+apiServer1 ..> replicaDb : JDBC/SSL (reads only)
+apiServer2 ..> replicaDb : JDBC/SSL (reads only)
+
+primaryDb -> replicaDb : Replication
+
+apiServer1 ..> emailService : SMTP/TLS
+apiServer2 ..> emailService : SMTP/TLS
+
+apiServer1 ..> monitoring : Metrics
+apiServer2 ..> monitoring : Metrics
+primaryDb ..> monitoring : Metrics
+replicaDb ..> monitoring : Metrics
+loadBalancer ..> monitoring : Metrics
+
+apiServer1 ..> logging : Logs
+apiServer2 ..> logging : Logs
+loadBalancer ..> logging : Logs
+
+' Notes
+note right of client
+  User's device running a modern
+  web browser with JavaScript enabled
+end note
+
+note right of frontendServer
+  Static file server that hosts
+  the compiled React application
+end note
+
+note right of loadBalancer
+  Distributes API traffic and
+  provides high availability
+end note
+
+note right of apiCluster
+  Horizontally scalable API servers
+  running in containers or VMs
+end note
+
+note left of dbCluster
+  Clustered database with primary-replica
+  setup for high availability
+end note
+
+note left of emailService
+  Handles sending verification emails,
+  password reset links, and notifications
+end note
+
+note bottom of monitoring
+  Tracks system performance,
+  availability, and security metrics
+end note
+
+@enduml 

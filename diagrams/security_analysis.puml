@@ -1,0 +1,143 @@
+@startuml SecurityThreatModel
+
+' Title of the diagram
+title "Two-Factor Authentication System - Security Threat Model"
+
+' Style settings
+skinparam backgroundColor white
+skinparam actorStyle awesome
+skinparam boundaryBackgroundColor white
+skinparam boundaryBorderColor #DC143C
+
+' Actors
+actor User as user
+actor Attacker as attacker
+actor "System Administrator" as admin
+
+' Boundaries
+boundary "Browser" as browser
+boundary "Frontend Application" as frontend
+boundary "API Server" as api
+boundary "Database" as db
+boundary "Email System" as email
+
+' Sensitive assets
+package "Sensitive Assets" as assets {
+  card "User Credentials" as credentials
+  card "2FA Secret Keys" as tfaSecret
+  card "JWT Tokens" as jwt
+  card "User Personal Data" as userData
+  card "Password Reset Tokens" as resetTokens
+}
+
+' Threat vectors
+package "Threat Vectors" {
+  card "Brute Force Attacks" as bruteforce
+  card "Phishing Attacks" as phishing
+  card "Man-in-the-Middle" as mitm
+  card "Cross-Site Scripting (XSS)" as xss
+  card "Cross-Site Request Forgery (CSRF)" as csrf
+  card "SQL Injection" as sqli
+  card "Session Hijacking" as sessionHijack
+  card "Stolen Device Access" as stolenDevice
+}
+
+' Security Controls
+package "Security Controls" {
+  card "Input Validation" as inputVal
+  card "Password Hashing (BCrypt)" as pwHash
+  card "TLS/SSL Encryption" as tls
+  card "CORS Policy" as cors
+  card "Rate Limiting" as rateLimit
+  card "Account Lockout" as lockout
+  card "JWT Short Expiry" as jwtExpiry
+  card "CSRF Tokens" as csrfToken
+  card "Prepared Statements" as preparedStmt
+  card "2FA Verification" as tfa
+  card "HTTP-Only Cookies" as httpOnly
+  card "Content Security Policy" as csp
+  card "Secure Cookie Flags" as secureCookies
+  card "Email Verification" as emailVerify
+}
+
+' Legitimate flow
+user --> browser : Uses
+browser --> frontend : Loads
+frontend --> api : Requests
+api --> db : Queries
+api --> email : Sends emails
+
+' Attack vectors
+attacker --> bruteforce : Attempts
+attacker --> phishing : Conducts
+attacker --> mitm : Intercepts
+attacker --> xss : Injects
+attacker --> csrf : Exploits
+attacker --> sqli : Attempts
+attacker --> sessionHijack : Tries
+attacker --> stolenDevice : Uses
+
+' Assets at risk
+bruteforce -[#red]-> credentials : Targets
+phishing -[#red]-> credentials : Harvests
+phishing -[#red]-> tfaSecret : May obtain
+mitm -[#red]-> jwt : Intercepts
+mitm -[#red]-> userData : Exposes
+xss -[#red]-> jwt : Steals
+csrf -[#red]-> api : Forces actions
+sqli -[#red]-> db : Compromises
+sessionHijack -[#red]-> jwt : Steals
+stolenDevice -[#red]-> browser : Accesses saved
+
+' Security control mitigations
+inputVal -[#green]-> xss : Prevents
+inputVal -[#green]-> sqli : Prevents
+pwHash -[#green]-> credentials : Protects
+tls -[#green]-> mitm : Prevents
+cors -[#green]-> csrf : Mitigates
+rateLimit -[#green]-> bruteforce : Mitigates
+lockout -[#green]-> bruteforce : Prevents
+jwtExpiry -[#green]-> jwt : Limits exposure
+csrfToken -[#green]-> csrf : Prevents
+preparedStmt -[#green]-> sqli : Prevents
+tfa -[#green]-> stolenDevice : Mitigates
+tfa -[#green]-> phishing : Mitigates
+tfa -[#green]-> credentials : Protects
+httpOnly -[#green]-> xss : Mitigates
+csp -[#green]-> xss : Restricts
+secureCookies -[#green]-> jwt : Protects
+emailVerify -[#green]-> userData : Validates
+
+' Administrative actions
+admin --> api : Monitors
+admin --> db : Backups
+admin --> email : Configures
+
+' Notes
+note right of bruteforce
+  Automated attempts to
+  guess user credentials
+end note
+
+note right of phishing
+  Fake login pages to
+  steal credentials
+end note
+
+note right of tfa
+  Requires something you know
+  (password) and something you
+  have (mobile device)
+end note
+
+note left of stolenDevice
+  Access to saved credentials
+  on user's device
+end note
+
+note bottom of inputVal
+  All user inputs are validated
+  on client and server side
+end note
+
+@enduml 

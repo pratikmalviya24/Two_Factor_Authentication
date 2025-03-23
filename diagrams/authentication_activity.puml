@@ -1,0 +1,152 @@
+@startuml AuthenticationActivity
+
+skinparam backgroundColor white
+skinparam activityBorderColor #333333
+skinparam activityBackgroundColor #F0F8FF
+skinparam activityDiamondBorderColor #333333
+skinparam activityDiamondBackgroundColor #FEFECE
+skinparam arrowColor #666666
+skinparam swimlaneBorderColor #999999
+skinparam swimlaneTitleFontStyle bold
+
+title Authentication Process with 2FA - Activity Diagram
+
+|User|
+start
+:Access Login Page;
+:Enter Username/Email and Password;
+
+|#AntiqueWhite|Frontend|
+:Validate Input Format;
+
+if (Input Format Valid?) then (yes)
+  :Validate reCAPTCHA;
+  if (reCAPTCHA Valid?) then (yes)
+    :Send Login Request to Backend;
+  else (no)
+    :Display reCAPTCHA Error;
+    stop
+  endif
+else (no)
+  :Display Format Error;
+  stop
+endif
+
+|#LightBlue|Backend|
+:Receive Login Request;
+:Look Up User by Username/Email;
+
+if (User Found?) then (yes)
+  :Verify Password with BCrypt;
+  
+  if (Password Correct?) then (yes)
+    :Check if Account is Enabled;
+    
+    if (Account Enabled?) then (yes)
+      :Check if Email is Verified;
+      
+      if (Email Verified?) then (yes)
+        :Check if 2FA is Enabled for User;
+        
+        if (2FA Enabled?) then (yes)
+          :Set Authentication Status (Pre-2FA);
+          :Return Response with requiresTfa=true;
+          
+          |Frontend|
+          :Display 2FA Code Input Form;
+          
+          |User|
+          :Open Authenticator App;
+          :Get Current TOTP Code;
+          :Enter 2FA Code;
+          
+          |Frontend|
+          :Send 2FA Verification Request;
+          
+          |Backend|
+          :Get User's TFA Configuration;
+          :Get Secret Key;
+          :Generate Current Valid TOTP Codes;
+          :Compare Input Code with Valid Codes;
+          
+          if (Code Valid?) then (yes)
+            :Set Full Authentication;
+            :Generate JWT Token;
+            :Return Token and User Profile;
+            
+            |Frontend|
+            :Store JWT Token in Local Storage;
+            :Store User Profile Data;
+            :Redirect to Dashboard;
+            
+            |User|
+            :Access Protected Resources;
+            
+            |Frontend|
+            :Add JWT to Request Headers;
+            :Make Authenticated API Calls;
+            
+            |Backend|
+            :Validate JWT Token;
+            :Process Protected Resource Requests;
+            :Return Protected Data;
+            
+            |Frontend|
+            :Display Protected Content;
+            stop
+          else (no)
+            :Return Invalid Code Error;
+            |Frontend|
+            :Display "Invalid Code" Error;
+            :Allow Retry;
+            stop
+          endif
+        else (no)
+          :Generate JWT Token;
+          :Return Token and User Profile;
+          
+          |Frontend|
+          :Store JWT Token in Local Storage;
+          :Store User Profile Data;
+          :Redirect to Dashboard;
+          
+          |User|
+          :Access Dashboard;
+          stop
+        endif
+      else (no)
+        :Return Email Not Verified Error;
+        |Frontend|
+        :Display "Email Not Verified" Message;
+        :Offer to Resend Verification Email;
+        stop
+      endif
+    else (no)
+      :Return Account Disabled Error;
+      |Frontend|
+      :Display "Account Disabled" Message;
+      stop
+    endif
+  else (no)
+    :Return Authentication Failed Error;
+    |Frontend|
+    :Display "Invalid Credentials" Error;
+    stop
+  endif
+else (no)
+  :Return Authentication Failed Error;
+  |Frontend|
+  :Display "Invalid Credentials" Error;
+  stop
+endif
+
+|User|
+:Logout;
+
+|Frontend|
+:Clear JWT Token;
+:Clear User Data;
+:Redirect to Login Page;
+stop
+
+@enduml 

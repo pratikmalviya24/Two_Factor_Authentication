@@ -1,0 +1,120 @@
+@startuml DataFlowDiagram
+
+' Title of the diagram
+title "Two-Factor Authentication System - Data Flow Diagram"
+
+' Style settings
+skinparam backgroundColor white
+skinparam rectangleBorderColor #4682B4
+skinparam rectangleBackgroundColor white
+skinparam databaseBorderColor #4682B4
+skinparam databaseBackgroundColor white
+skinparam arrowColor #4682B4
+skinparam stereotypeCBackgroundColor white
+
+' External entities
+rectangle "User" as user #lightblue
+rectangle "Administrator" as admin #lightblue
+
+' Processes
+rectangle "Registration Process" as registerProcess
+rectangle "Login Process" as loginProcess
+rectangle "2FA Verification Process" as tfaProcess
+rectangle "Profile Management" as profileProcess
+rectangle "Password Reset Process" as resetProcess
+rectangle "2FA Setup Process" as setupProcess
+rectangle "JWT Generation" as jwtProcess
+rectangle "Email Notification" as emailProcess
+
+' Data stores
+database "User Repository" as userDB
+database "TFA Config Repository" as tfaDB
+database "Password Reset Token Repository" as resetTokenDB
+database "Email Verification Token Repository" as emailTokenDB
+
+' Data flows for registration
+user --> registerProcess : Username, Email, Password
+registerProcess --> userDB : Store User Data
+registerProcess --> emailTokenDB : Create Verification Token
+registerProcess --> emailProcess : Request Verification Email
+emailProcess --> user : Send Verification Email
+user --> registerProcess : Verify Email Token
+registerProcess --> userDB : Update Email Verification Status
+
+' Data flows for login
+user --> loginProcess : Username, Password
+loginProcess --> userDB : Validate Credentials
+userDB --> loginProcess : User Details
+loginProcess --> tfaDB : Check if 2FA Enabled
+tfaDB --> loginProcess : 2FA Status
+loginProcess --> tfaProcess : If 2FA Enabled
+loginProcess --> jwtProcess : If 2FA Disabled/Verified
+jwtProcess --> user : JWT Token
+
+' Data flows for 2FA verification
+user --> tfaProcess : TOTP Code
+tfaProcess --> tfaDB : Get 2FA Secret
+tfaDB --> tfaProcess : 2FA Configuration
+tfaProcess --> jwtProcess : If Code Valid
+jwtProcess --> user : JWT Token
+
+' Data flows for 2FA setup
+user --> setupProcess : Request 2FA Setup
+setupProcess --> tfaDB : Generate Secret
+setupProcess --> user : QR Code, Secret
+user --> setupProcess : TOTP Code Verification
+setupProcess --> tfaDB : Enable 2FA
+
+' Data flows for password reset
+user --> resetProcess : Request Password Reset
+resetProcess --> userDB : Find User
+resetProcess --> resetTokenDB : Create Reset Token
+resetProcess --> emailProcess : Request Reset Email
+emailProcess --> user : Send Reset Link
+user --> resetProcess : Reset Token, New Password
+resetProcess --> resetTokenDB : Validate Token
+resetProcess --> userDB : Update Password
+resetTokenDB --> resetProcess : Mark Token Used
+
+' Data flows for profile management
+user --> profileProcess : Update Profile Data
+profileProcess --> userDB : Update User Data
+profileProcess --> user : Confirmation
+
+' Admin flows
+admin --> userDB : Manage Users
+admin --> tfaDB : Configure 2FA Settings
+admin --> resetTokenDB : Manage Reset Tokens
+
+' Add notes for clarification
+note right of registerProcess
+  Validates input, checks for duplicate
+  usernames/emails, and enforces
+  password complexity requirements
+end note
+
+note right of loginProcess
+  Validates credentials using BCrypt,
+  checks account status, and
+  determines if 2FA is required
+end note
+
+note right of tfaProcess
+  Validates TOTP code against
+  the stored secret using
+  RFC 6238 algorithm
+end note
+
+note right of jwtProcess
+  Generates a signed JWT with
+  user claims and short expiry,
+  plus a refresh token
+end note
+
+note right of resetProcess
+  Creates a time-limited token,
+  validates it on reset, and
+  enforces password complexity
+end note
+
+@enduml 
