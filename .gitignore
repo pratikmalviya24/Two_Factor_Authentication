@@ -9,6 +9,7 @@ backend/.project
 backend/.classpath
 backend/.factorypath
 backend/.springBeans
+two-factor-auth/backend/src/main/resources/application.yml
 
 # Frontend
 frontend/node_modules/

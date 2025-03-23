@@ -31,7 +31,7 @@ import com.security.twofactorauth.dto.UserProfile;
 import com.security.twofactorauth.model.TFAConfig;
 import com.security.twofactorauth.model.User;
 import com.security.twofactorauth.repository.UserRepository;
-import com.security.twofactorauth.security.jwt.JwtUtils;
+import com.security.twofactorauth.security.JwtTokenProvider;
 import com.security.twofactorauth.security.service.UserDetailsImpl;
 import com.security.twofactorauth.service.CaptchaService;
 import com.security.twofactorauth.service.TwoFactorAuthService;
@@ -50,7 +50,7 @@ public class AuthController {
     PasswordEncoder encoder;
 
     @Autowired
-    JwtUtils jwtUtils;
+    JwtTokenProvider jwtTokenProvider;
 
     @Autowired
     TwoFactorAuthService tfaService;
@@ -84,20 +84,18 @@ public class AuthController {
         user.setEmail(signUpRequest.getEmail());
         user.setPassword(encoder.encode(signUpRequest.getPassword()));
 
-        // Enable 2FA by default for new users
-        user.setTfaEnabled(true);
+        // Always set TFA to disabled during registration
+        // It will be enabled during the verification step if the user chooses to
+        user.setTfaEnabled(false);
         user = userRepository.save(user);
 
-        // Set up 2FA configuration
-        TFAConfig config = tfaService.setupTwoFactorAuth(user, TFAConfig.TFAType.APP);
-        String qrCodeUrl = tfaService.generateOrRetrieveQRCodeUri(user.getUsername(), config);
-
+        // Return simple success response
         return ResponseEntity.ok(JwtResponse.builder()
-                .tfaEnabled(true)
-                .tfaSetupSecret(qrCodeUrl)
+                .tfaEnabled(false)
                 .username(user.getUsername())
-                .tfaType("APP")
-                .requiresTwoFactor(true)
+                .requiresTwoFactor(false)
+                .message("Registration successful!")
+                .success(true)
                 .build());
     }
 
@@ -114,11 +112,21 @@ public class AuthController {
                     new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+            // Extract username safely
+            String username;
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof UserDetailsImpl) {
+                username = ((UserDetailsImpl) principal).getUsername();
+            } else if (principal instanceof String) {
+                username = (String) principal;
+            } else {
+                throw new IllegalArgumentException("Unsupported principal type: " + principal.getClass());
+            }
             
             // Try to find by username first, then by email if not found
-            User user = userRepository.findByUsername(userDetails.getUsername())
-                    .orElseGet(() -> userRepository.findByEmail(userDetails.getUsername())
+            User user = userRepository.findByUsername(username)
+                    .orElseGet(() -> userRepository.findByEmail(username)
                             .orElseThrow(() -> new RuntimeException("User not found")));
             
             // Check if user has 2FA enabled
@@ -128,14 +136,15 @@ public class AuthController {
                     ? Optional.of(user.getTfaConfig())
                     : Optional.empty();
 
+                // For login verification, don't include the QR code
                 return ResponseEntity.ok(JwtResponse.builder()
                         .requiresTwoFactor(true)
-                        .username(userDetails.getUsername())
+                        .username(username)
                         .tfaType(tfaConfig.map(config -> config.getTfaType().toString()).orElse("APP"))
                         .build());
             } else {
                 // If 2FA is not enabled, return JWT token directly
-                String jwt = jwtUtils.generateJwtToken(authentication);
+                String jwt = jwtTokenProvider.generateToken(username);
                 return ResponseEntity.ok(JwtResponse.builder()
                         .token(jwt)
                         .id(user.getId())
@@ -157,9 +166,11 @@ public class AuthController {
                     .orElseGet(() -> userRepository.findByEmail(request.getUsername())
                             .orElseThrow(() -> new RuntimeException("User not found")));
 
+            // This is the setup flow - generate new TFA configuration
             TFAConfig config = tfaService.setupTwoFactorAuth(user, request.getTfaType());
             
             if (request.getTfaType() == TFAConfig.TFAType.APP) {
+                // Generate and include QR code only during setup
                 String qrCodeUrl = tfaService.generateOrRetrieveQRCodeUri(user.getUsername(), config);
                 return ResponseEntity.ok()
                         .body(JwtResponse.builder()
@@ -190,7 +201,14 @@ public class AuthController {
                         .orElseThrow(() -> new RuntimeException("User not found")));
 
         if (tfaService.verifyTwoFactorAuth(user, request.getCode())) {
-            String jwt = jwtUtils.generateJwtToken(request.getUsername());
+            // If verification is successful and it's first-time setup, enable TFA
+            // The isFirstSetup flag would be true if this is being called from TFA setup flow
+            if (!user.isTfaEnabled() && request.isFirstTimeSetup()) {
+                user.setTfaEnabled(true);
+                userRepository.save(user);
+            }
+            
+            String jwt = jwtTokenProvider.generateToken(request.getUsername());
             return ResponseEntity.ok(JwtResponse.builder()
                     .token(jwt)
                     .id(user.getId())
@@ -198,6 +216,8 @@ public class AuthController {
                     .email(user.getEmail())
                     .tfaEnabled(user.isTfaEnabled())
                     .requiresTwoFactor(false)
+                    .success(true)
+                    .message("Verification successful")
                     .build());
         }
 
@@ -212,9 +232,21 @@ public class AuthController {
     @PostMapping("/delete-account")
     public ResponseEntity<?> deleteAccount() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         
-        userRepository.deleteById(userDetails.getId());
+        // Extract user ID safely
+        Long userId;
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserDetailsImpl) {
+            userId = ((UserDetailsImpl) principal).getId();
+        } else {
+            // If principal is a String, find the user by username
+            String username = principal.toString();
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            userId = user.getId();
+        }
+        
+        userRepository.deleteById(userId);
         SecurityContextHolder.clearContext();
         
         return ResponseEntity.ok().build();
@@ -223,9 +255,20 @@ public class AuthController {
     @GetMapping("/profile")
     public ResponseEntity<?> getUserProfile() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        User user = userRepository.findById(userDetails.getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        // Extract user details safely
+        User user;
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserDetailsImpl) {
+            UserDetailsImpl userDetails = (UserDetailsImpl) principal;
+            user = userRepository.findById(userDetails.getId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+        } else {
+            // If principal is a String, find the user by username
+            String username = principal.toString();
+            user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+        }
 
         return ResponseEntity.ok(new UserProfile(
                 user.getId(),

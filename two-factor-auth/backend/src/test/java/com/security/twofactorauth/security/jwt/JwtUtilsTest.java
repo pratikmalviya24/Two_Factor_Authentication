@@ -19,7 +19,7 @@ import com.security.twofactorauth.security.service.UserDetailsImpl;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureException;
+import io.jsonwebtoken.security.SignatureException;
 
 /**
  * Tests for JWT utility functions.
@@ -37,13 +37,11 @@ public class JwtUtilsTest {
     private JwtUtils jwtUtils;
     private UserDetailsImpl userDetails;
     private Authentication authentication;
-    private final String secretKey = "testSecretKey123456789testSecretKey123456789testSecretKey123456789";
     private final int jwtExpirationMs = 1000; // 1 second for testing
 
     @BeforeEach
     void setUp() {
         jwtUtils = new JwtUtils();
-        ReflectionTestUtils.setField(jwtUtils, "jwtSecret", secretKey);
         ReflectionTestUtils.setField(jwtUtils, "jwtExpirationMs", jwtExpirationMs);
 
         userDetails = new UserDetailsImpl(

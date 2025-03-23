@@ -3,6 +3,8 @@ package com.security.twofactorauth.security.jwt;
 import java.security.Key;
 import java.util.Date;
 
+import javax.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,18 +27,47 @@ public class JwtUtils {
 
     @Value("${app.jwt.expiration}")
     private int jwtExpirationMs;
-
-    private final Key signingKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
     
-    private Key getSigningKey() {
+    // Static shared signing key for the entire application
+    private static Key SHARED_SIGNING_KEY;
+
+    private Key signingKey;
+    
+    @PostConstruct
+    public void init() {
+        if (SHARED_SIGNING_KEY == null) {
+            // Generate a secure key for HS512 algorithm if it doesn't exist yet
+            SHARED_SIGNING_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+            logger.info("Generated new secure signing key for HS512");
+        }
+        
+        this.signingKey = SHARED_SIGNING_KEY;
+        logger.info("JwtUtils initialized with shared signing key");
+    }
+    
+    public Key getSigningKey() {
+        if (signingKey == null) {
+            logger.warn("Signing key was null, reinitializing");
+            init();
+        }
         return signingKey;
     }
 
     public String generateJwtToken(Authentication authentication) {
-        UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
+        // Extract the username from the principal, handling both String and UserDetailsImpl cases
+        String username;
+        Object principal = authentication.getPrincipal();
+        
+        if (principal instanceof UserDetailsImpl) {
+            username = ((UserDetailsImpl) principal).getUsername();
+        } else if (principal instanceof String) {
+            username = (String) principal;
+        } else {
+            throw new IllegalArgumentException("Unsupported principal type: " + principal.getClass());
+        }
 
         return Jwts.builder()
-                .setSubject((userPrincipal.getUsername()))
+                .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)

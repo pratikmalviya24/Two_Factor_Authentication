@@ -4,6 +4,7 @@ import { CircularProgress, Box } from '@mui/material';
 import Login from './components/Login';
 import Register from './components/Register';
 import TwoFactorVerification from './components/TwoFactorVerification';
+import TfaSelection from './components/TfaSelection';
 import Dashboard from './components/Dashboard';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import UserProfile from './components/UserProfile';
@@ -42,6 +43,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/verify-2fa" element={<TwoFactorVerification />} />
+      <Route path="/tfa-selection" element={<TfaSelection />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route
         path="/dashboard"
