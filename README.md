@@ -67,41 +67,6 @@ Key components in the architecture:
 
 This architecture follows a standard n-tier approach with clear separation of concerns, enabling maintainability, scalability, and security best practices.
 
-### Deployment Architecture
-
-The deployment diagram illustrates how the system would be deployed in a production environment with high availability and scalability considerations.
-
-![Deployment Diagram](diagrams/DeploymentDiagram.png)
-
-Key deployment components:
-
-1. **Client Tier**
-   - Web browsers executing the React SPA
-   - CDN for static assets distribution
-
-2. **Web Tier**
-   - NGINX servers hosting the compiled frontend application
-   - Load balancers distributing traffic for high availability
-
-3. **Application Tier**
-   - Clustered API servers running Spring Boot applications
-   - Horizontally scalable for increased traffic demands
-
-4. **Data Tier**
-   - Primary-replica database setup for high availability
-   - Read operations distributed to replicas for better performance
-
-5. **External Services**
-   - Email service for sending verification emails and notifications
-   - Monitoring and logging infrastructure for system observability
-
-This deployment architecture ensures:
-- High availability through redundancy at each tier
-- Scalability through horizontal scaling of stateless components
-- Performance through load distribution and caching
-- Security through network segregation and encrypted communications
-- Observability through comprehensive monitoring and logging
-
 ## Use Case Analysis
 
 ### Use Case Diagram
