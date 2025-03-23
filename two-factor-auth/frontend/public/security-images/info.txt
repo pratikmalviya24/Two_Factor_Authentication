@@ -1,0 +1,17 @@
+Images used in the security dashboard:
+
+1. security-score.jpg - Background showing a security rating or score visualization
+2. security-checklist.jpg - Background showing a security checklist or audit
+3. security-events.jpg - Background showing security monitoring or alerts
+4. password-status.jpg - Background showing password protection concept
+5. login-activity.jpg - Background showing user authentication or login
+6. security-recommendations.jpg - Background showing security improvement suggestions
+
+Note: Please ensure all images are properly licensed for use. You may use free stock photos from sources like:
+- Unsplash (https://unsplash.com)
+- Pexels (https://www.pexels.com)
+- Adobe Stock (with license)
+
+Recommended image dimensions: 1200x800px
+Format: JPG/JPEG
+Optimize for web use to keep file sizes small

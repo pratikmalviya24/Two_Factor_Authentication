@@ -1,0 +1,33 @@
+FROM eclipse-temurin:11-jdk AS build
+WORKDIR /app
+
+# Copy Maven configuration
+COPY two-factor-auth/backend/pom.xml .
+COPY two-factor-auth/backend/.mvn/ ./.mvn
+COPY two-factor-auth/backend/mvnw .
+COPY two-factor-auth/backend/mvnw.cmd .
+
+# Copy source code
+COPY two-factor-auth/backend/src ./src
+
+# Package the application
+RUN chmod +x ./mvnw && ./mvnw package -DskipTests
+
+# Runtime stage
+FROM eclipse-temurin:11-jre
+WORKDIR /app
+
+# Copy the JAR file from the build stage
+COPY --from=build /app/target/*.jar app.jar
+
+# Environment variables with defaults that can be overridden
+ENV SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/railway
+ENV SPRING_DATASOURCE_USERNAME=root
+ENV SPRING_DATASOURCE_PASSWORD=password
+ENV SERVER_PORT=8082
+ENV SPRING_MAIL_USERNAME=your_email@gmail.com
+ENV SPRING_MAIL_PASSWORD=your_app_password
+
+EXPOSE 8082
+
+ENTRYPOINT ["java", "-jar", "/app/app.jar"] 

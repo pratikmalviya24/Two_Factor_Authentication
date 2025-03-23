@@ -1,0 +1,83 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/two_factor_auth
+    username: root
+    password: your_password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+
+  logging:
+    level:
+      root: INFO
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: your_email@gmail.com
+    password: your_app_password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            trust: smtp.gmail.com
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
+          # Connection pooling
+          connection-pool:
+            size: 5
+            enable: true
+          # Session pooling
+          session:
+            pooling: true
+            pool:
+              size: 5
+          # Retry mechanism
+          retry:
+            count: 3
+            delay: 1000
+          # Reliability improvements
+          sendpartial: true
+          quitwait: false
+          connectionpool:
+            size: 5
+            debug: true
+        debug: true
+        transport:
+          protocol: smtp
+    default-encoding: UTF-8
+    test-connection: true
+
+server:
+  port: 8082
+  servlet:
+    context-path: /api
+
+app:
+  jwt:
+    expiration: 86400000
+  mail:
+    from: your_email@gmail.com
+  tfa:
+    issuer: TwoFactorAuth
+    validity-period: 30
+    digits: 6
+  url:
+    frontend: http://localhost:3000
+
+google:
+  recaptcha:
+    site-key: your_site_key
+    secret: your_secret_key
+    verify-url: https://www.google.com/recaptcha/api/siteverify 

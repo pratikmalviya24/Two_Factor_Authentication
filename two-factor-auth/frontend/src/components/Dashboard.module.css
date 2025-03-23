@@ -1,0 +1,69 @@
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fadeInUp {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes pulseWave {
+  0% {
+    box-shadow: 0 0 0 0 rgba(25, 118, 210, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(25, 118, 210, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(25, 118, 210, 0);
+  }
+}
+
+.pulseButton {
+  animation: pulseWave 2s infinite;
+}
+
+.progressBar {
+  transition: all 0.3s ease-in-out;
+}
+
+.progressBar:hover {
+  transform: scaleY(1.2);
+}
+
+.securityCard {
+  opacity: 0;
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.securityCard:nth-child(1) { animation-delay: 0.1s; }
+.securityCard:nth-child(2) { animation-delay: 0.2s; }
+.securityCard:nth-child(3) { animation-delay: 0.3s; }
+
+.listItem {
+  transition: all 0.3s ease-in-out;
+}
+
+.listItem:hover {
+  background-color: rgba(25, 118, 210, 0.08);
+  transform: translateX(8px);
+}
+
+.deviceIcon {
+  transition: transform 0.3s ease;
+}
+
+.deviceIcon:hover {
+  transform: scale(1.2);
+}
+
+.tip {
+  opacity: 0;
+  animation: fadeInUp 0.5s ease-out forwards;
+}
