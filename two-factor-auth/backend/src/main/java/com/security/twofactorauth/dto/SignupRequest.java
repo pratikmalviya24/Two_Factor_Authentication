@@ -20,6 +20,8 @@ public class SignupRequest {
     
     @NotBlank(message = "Captcha response cannot be blank")
     private String captchaResponse;
+    
+    private boolean tfaEnabled = true; // Default to true for backward compatibility
 
     public String getUsername() {
         return username;
@@ -51,5 +53,13 @@ public class SignupRequest {
     
     public void setCaptchaResponse(String captchaResponse) {
         this.captchaResponse = captchaResponse;
+    }
+    
+    public boolean isTfaEnabled() {
+        return tfaEnabled;
+    }
+    
+    public void setTfaEnabled(boolean tfaEnabled) {
+        this.tfaEnabled = tfaEnabled;
     }
 }

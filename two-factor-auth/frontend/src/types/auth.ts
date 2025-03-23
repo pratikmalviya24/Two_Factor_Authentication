@@ -4,11 +4,17 @@ export interface LoginResponse {
   type?: string;
   username?: string;
   email?: string;
+  tfaType?: string;
 }
 
 export interface RegisterResponse {
-  message: string;
-  success: boolean;
+  message?: string;
+  success?: boolean;
+  tfaEnabled?: boolean;
+  tfaSetupSecret?: string;
+  tfaType?: string;
+  username?: string;
+  requiresTwoFactor?: boolean;
 }
 
 export interface TwoFactorSetupResponse {
@@ -44,11 +50,13 @@ export interface RegisterRequest {
   email: string;
   password: string;
   captchaResponse: string;
+  tfaEnabled: boolean;
 }
 
 export interface TwoFactorVerifyRequest {
   username: string;
   code: string;
+  firstTimeSetup?: boolean;
 }
 
 export interface PasswordResetResponse {

@@ -17,7 +17,8 @@ import {
   StepLabel,
   Fade,
   Grow,
-  CircularProgress
+  CircularProgress,
+  Switch
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useApiError } from '../hooks/useApiError';
@@ -61,7 +62,7 @@ const Register: React.FC = () => {
   const steps = ['Create Account', 'Security Details', 'Verification'];
   const [captchaToken, setCaptchaToken] = useState<string>('');
   // Use Google's special test key for development
-  const [siteKey, setSiteKey] = useState<string>('6Lc8-vwqAAAAAM6pSulL7ReN7X2tG1sIBoG-YCjC');
+  const [siteKey, setSiteKey] = useState<string>('6LeY4_oqAAAAAAbHgvetFulQ-McPyqhCsPjtBtHl');
   const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   useEffect(() => {
@@ -158,13 +159,22 @@ const Register: React.FC = () => {
 
     try {
       startLoading();
-      await apiService.register({
+      const response = await apiService.register({
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        captchaResponse: captchaToken
+        captchaResponse: captchaToken,
+        // Set tfaEnabled to false initially - will be set by the user in the next step
+        tfaEnabled: false
       });
-      navigate('/login', { state: { message: 'Registration successful! Please login.' } });
+      
+      // After successful registration, redirect to the TFA selection page
+      navigate('/tfa-selection', { 
+        state: { 
+          username: formData.username,
+          email: formData.email
+        } 
+      });
     } catch (error) {
       handleError(error);
       // Reset the reCAPTCHA on error

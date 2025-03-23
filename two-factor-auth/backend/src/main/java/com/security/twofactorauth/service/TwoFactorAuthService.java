@@ -223,27 +223,36 @@ public class TwoFactorAuthService {
     private void sendEmail(String toEmail, String code, int attemptNumber) throws Exception {
         logger.debug("Using from address: {}", mailFrom);
 
-        MimeMessage mimeMessage = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-        
-        helper.setFrom(mailFrom);
-        helper.setTo(toEmail);
-        helper.setSubject("Two-Factor Authentication Code");
-        String htmlContent = String.format(
-            "<html><body>" +
-            "<h2>Your Verification Code</h2>" +
-            "<p>Your verification code is: <strong>%s</strong></p>" +
-            "<p>This code will expire after use.</p>" +
-            "<p>If you did not request this code, please ignore this email.</p>" +
-            "<p>Note: This is attempt %d of %d.</p>" +
-            "</body></html>",
-            code,
-            attemptNumber,
-            MAX_RETRIES
-        );
-        helper.setText(htmlContent, true);
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+            
+            helper.setFrom(mailFrom);
+            helper.setTo(toEmail);
+            helper.setSubject("Two-Factor Authentication Code");
+            String htmlContent = String.format(
+                "<html><body>" +
+                "<h2>Your Verification Code</h2>" +
+                "<p>Your verification code is: <strong>%s</strong></p>" +
+                "<p>This code will expire after use.</p>" +
+                "<p>If you did not request this code, please ignore this email.</p>" +
+                "<p>Note: This is attempt %d of %d.</p>" +
+                "</body></html>",
+                code,
+                attemptNumber,
+                MAX_RETRIES
+            );
+            helper.setText(htmlContent, true);
 
-        logger.debug("Mail message prepared, attempting to send...");
-        mailSender.send(mimeMessage);
+            logger.debug("Mail message prepared, attempting to send...");
+            mailSender.send(mimeMessage);
+            logger.info("Email successfully sent to: {}", toEmail);
+        } catch (Exception e) {
+            logger.error("Failed to send email: {}", e.getMessage());
+            if (e.getCause() != null) {
+                logger.error("Cause: {}", e.getCause().getMessage());
+            }
+            throw e;
+        }
     }
 }

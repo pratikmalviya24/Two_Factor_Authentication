@@ -11,6 +11,8 @@ public class TwoFactorRequest {
     private String code;
 
     private TFAType tfaType;
+    
+    private boolean firstTimeSetup = false; // Default to false for backward compatibility
 
     public String getUsername() {
         return username;
@@ -34,5 +36,13 @@ public class TwoFactorRequest {
 
     public void setTfaType(TFAType tfaType) {
         this.tfaType = tfaType;
+    }
+    
+    public boolean isFirstTimeSetup() {
+        return firstTimeSetup;
+    }
+    
+    public void setFirstTimeSetup(boolean firstTimeSetup) {
+        this.firstTimeSetup = firstTimeSetup;
     }
 }

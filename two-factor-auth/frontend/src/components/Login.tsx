@@ -44,7 +44,7 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string>('');
   // Use Google's special test key for development
-  const [siteKey, setSiteKey] = useState<string>('6Lc8-vwqAAAAAM6pSulL7ReN7X2tG1sIBoG-YCjC');
+  const [siteKey, setSiteKey] = useState<string>('6LeY4_oqAAAAAAbHgvetFulQ-McPyqhCsPjtBtHl');
   const recaptchaRef = useRef<ReCAPTCHA>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -95,10 +95,19 @@ const Login: React.FC = () => {
     try {
       startLoading();
       const response = await apiService.login(username, password, captchaToken);
-      const { token, requiresTwoFactor } = response.data;
+      const { token, requiresTwoFactor, tfaType } = response.data;
 
       if (requiresTwoFactor) {
-        navigate('/verify-2fa', { state: { username } });
+        // Navigate to 2FA verification with a flag to show method selection for login flow
+        navigate('/verify-2fa', { 
+          state: { 
+            username,
+            setupMode: false,
+            tfaType: tfaType || 'APP',
+            loginFlow: true, // Flag to indicate this is a login flow and should show method selection
+            message: 'Please verify your identity using one of the following methods:'
+          } 
+        });
       } else if (token) {
         login(token);
         navigate('/dashboard');

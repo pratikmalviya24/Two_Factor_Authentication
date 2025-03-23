@@ -10,11 +10,13 @@ public class JwtResponse {
     private boolean requiresTwoFactor;
     private String tfaSetupSecret;
     private String tfaType;
+    private String message;
+    private boolean success;
 
     public JwtResponse() {
     }
 
-    private JwtResponse(String token, String type, Long id, String username, String email, boolean tfaEnabled, boolean requiresTwoFactor, String tfaSetupSecret, String tfaType) {
+    private JwtResponse(String token, String type, Long id, String username, String email, boolean tfaEnabled, boolean requiresTwoFactor, String tfaSetupSecret, String tfaType, String message, boolean success) {
         this.token = token;
         this.type = type;
         this.id = id;
@@ -24,6 +26,8 @@ public class JwtResponse {
         this.requiresTwoFactor = requiresTwoFactor;
         this.tfaSetupSecret = tfaSetupSecret;
         this.tfaType = tfaType;
+        this.message = message;
+        this.success = success;
     }
 
     public String getToken() {
@@ -98,6 +102,22 @@ public class JwtResponse {
         this.tfaType = tfaType;
     }
 
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public boolean isSuccess() {
+        return success;
+    }
+
+    public void setSuccess(boolean success) {
+        this.success = success;
+    }
+
     public static JwtResponseBuilder builder() {
         return new JwtResponseBuilder();
     }
@@ -112,6 +132,8 @@ public class JwtResponse {
         private boolean requiresTwoFactor;
         private String tfaSetupSecret;
         private String tfaType;
+        private String message;
+        private boolean success;
 
         JwtResponseBuilder() {
         }
@@ -161,8 +183,18 @@ public class JwtResponse {
             return this;
         }
 
+        public JwtResponseBuilder message(String message) {
+            this.message = message;
+            return this;
+        }
+
+        public JwtResponseBuilder success(boolean success) {
+            this.success = success;
+            return this;
+        }
+
         public JwtResponse build() {
-            return new JwtResponse(token, type, id, username, email, tfaEnabled, requiresTwoFactor, tfaSetupSecret, tfaType);
+            return new JwtResponse(token, type, id, username, email, tfaEnabled, requiresTwoFactor, tfaSetupSecret, tfaType, message, success);
         }
     }
 }

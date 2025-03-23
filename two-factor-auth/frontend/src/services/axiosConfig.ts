@@ -2,7 +2,7 @@ import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
 export const createAxiosInstance = (): AxiosInstance => {
   const instance = axios.create({
-    baseURL: 'https://tfabackend-production.up.railway.app/api',
+    baseURL: 'http://localhost:8082/api',
     headers: {
       'Content-Type': 'application/json',
     },

@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { getTfaSettings, updateTfaSettings } from '../services/profileService';
-import { Switch, Box, Typography, Paper } from '@mui/material';
+import { Box, Typography, Paper, Button } from '@mui/material';
+import { Security } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 
 const ProfilePage: React.FC = () => {
     const [tfaEnabled, setTfaEnabled] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const navigate = useNavigate();
 
-    useEffect(() => {
-        loadTfaSettings();
-    }, []);
-
+    // Define loadTfaSettings before useEffect to avoid reference changes
     const loadTfaSettings = async () => {
         try {
             const settings = await getTfaSettings();
@@ -21,9 +21,25 @@ const ProfilePage: React.FC = () => {
         }
     };
 
-    const handleTfaToggle = async () => {
+    useEffect(() => {
+        loadTfaSettings();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const handleEnableTfa = () => {
+        navigate('/verify-2fa', { 
+            state: { 
+                setupMode: true,
+                tfaType: 'APP',
+                selectedMethod: 'APP',
+                fromProfile: true
+            } 
+        });
+    };
+
+    const handleDisableTfa = async () => {
         try {
-            const updatedSettings = await updateTfaSettings(!tfaEnabled);
+            const updatedSettings = await updateTfaSettings(false);
             setTfaEnabled(updatedSettings.enabled);
         } catch (error) {
             console.error('Failed to update TFA settings:', error);
@@ -40,24 +56,38 @@ const ProfilePage: React.FC = () => {
                 <Typography variant="h5" gutterBottom>
                     Profile Settings
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', marginTop: 2 }}>
-                    <Typography>
-                        Two-Factor Authentication
+                <Box sx={{ marginTop: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: 2 }}>
+                        <Security color={tfaEnabled ? "success" : "action"} sx={{ marginRight: 1 }} />
+                        <Typography variant="h6">
+                            Two-Factor Authentication
+                        </Typography>
+                    </Box>
+                    
+                    <Typography variant="body2" color="textSecondary" sx={{ marginBottom: 2 }}>
+                        {tfaEnabled 
+                            ? "Two-factor authentication is currently enabled. You will be required to enter a verification code when signing in." 
+                            : "Enable two-factor authentication to add an extra layer of security to your account."}
                     </Typography>
-                    <Switch
-                        checked={tfaEnabled}
-                        onChange={handleTfaToggle}
-                        inputProps={{ 'aria-label': 'toggle two-factor authentication' }}
-                    />
-                    <Typography variant="body2" color="textSecondary" sx={{ marginLeft: 2 }}>
-                        {tfaEnabled ? 'Enabled' : 'Disabled'}
-                    </Typography>
+                    
+                    {!tfaEnabled ? (
+                        <Button 
+                            variant="contained" 
+                            color="primary"
+                            onClick={handleEnableTfa}
+                        >
+                            Enable Two-Factor Authentication
+                        </Button>
+                    ) : (
+                        <Button 
+                            variant="outlined" 
+                            color="error"
+                            onClick={handleDisableTfa}
+                        >
+                            Disable Two-Factor Authentication
+                        </Button>
+                    )}
                 </Box>
-                {tfaEnabled && (
-                    <Typography variant="body2" color="info.main" sx={{ marginTop: 1 }}>
-                        You will be required to enter a verification code when signing in.
-                    </Typography>
-                )}
             </Paper>
         </Box>
     );

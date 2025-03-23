@@ -18,7 +18,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.security.twofactorauth.security.jwt.AuthEntryPointJwt;
-import com.security.twofactorauth.security.jwt.AuthTokenFilter;
 import com.security.twofactorauth.security.service.UserDetailsServiceImpl;
 
 @Configuration
@@ -32,10 +31,13 @@ public class WebSecurityConfig {
 
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
+    
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
 
     @Bean
-    public AuthTokenFilter authenticationJwtTokenFilter() {
-        return new AuthTokenFilter();
+    public JwtAuthenticationFilter authenticationJwtTokenFilter() {
+        return new JwtAuthenticationFilter(jwtTokenProvider);
     }
 
     @Bean
@@ -79,6 +81,7 @@ public class WebSecurityConfig {
             .authorizeRequests()
                 .antMatchers("/auth/**").permitAll()
                 .antMatchers("/password/**").permitAll()
+                .antMatchers("/api/public/**").permitAll()
                 .antMatchers("/profile/**").authenticated()
                 .anyRequest().authenticated()
             .and();
