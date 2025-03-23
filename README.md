@@ -481,7 +481,7 @@ The 2FA method selection screen includes:
 - Responsive design that adapts to different screen sizes
 
 #### Account Creation Flow
-![Account Creation](diagrams/account-creation.png)
+![Security Settings](diagrams/security-settings.png)
 
 The registration process features:
 - Multi-step approach breaking down the registration into manageable segments
@@ -495,7 +495,8 @@ The registration process features:
 ### User Profile and Security Management
 
 #### Security Settings Panel
-![Security Settings](diagrams/security-settings.png)
+![Account Creation](diagrams/account-creation.png)
+
 
 The security settings interface provides:
 - Clearly organized security options in visually distinct cards
