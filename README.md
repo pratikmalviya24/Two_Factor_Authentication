@@ -65,8 +65,6 @@ Key components in the architecture:
    - Email Service Provider: Delivers verification and notification emails
    - Google Authenticator (or compatible TOTP apps): Generates verification codes
 
-This architecture follows a standard n-tier approach with clear separation of concerns, enabling maintainability, scalability, and security best practices.
-
 ## Use Case Analysis
 
 ### Use Case Diagram
@@ -164,8 +162,6 @@ The Class Diagram illustrates the object-oriented structure of the Two-Factor Au
 - **Service Layer Pattern**: For business logic encapsulation
 - **DTO Pattern**: For API contract definition and object mapping
 - **Dependency Injection**: For loose coupling between components
-
-This design provides a clean separation of concerns, making the system maintainable, testable, and scalable.
 
 ## Sequence Diagrams
 
@@ -267,7 +263,7 @@ This activity diagram shows the complete registration flow including client-side
 - Email verification flow
 - Token expiration handling
 - Error handling paths for various scenarios
-- Clear separation between User, Frontend, Backend, and Email Service swimlanes
+- Clear separation between User, Frontend, Backend, and Email Service
 
 ### 2. Authentication Process with 2FA
 
@@ -319,7 +315,7 @@ The Entity-Relationship model illustrates the data structure of the application 
 
 ![Entity Relationship Diagram](diagrams/EntityRelationshipDiagram.png)
 
-### Database Schema:
+<!-- ### Database Schema:
 
 #### User Table
 This is the central entity that stores user authentication information.
@@ -370,7 +366,7 @@ Stores tokens for email verification requests.
 | token | VARCHAR(100) | Unique token sent via email |
 | expiry_date | TIMESTAMP | When the token becomes invalid |
 | is_used | BOOLEAN | Indicates if token has been used |
-| created_at | TIMESTAMP | Record creation timestamp |
+| created_at | TIMESTAMP | Record creation timestamp | -->
 
 ### Entity Relationships:
 
