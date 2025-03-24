@@ -134,7 +134,7 @@ const Register: React.FC = () => {
   const steps = ['Account Info', 'Security', 'Verification'];
   const [captchaToken, setCaptchaToken] = useState<string>('');
   // Use Google's special test key for development
-  const [siteKey, setSiteKey] = useState<string>('6LeY4_oqAAAAAAbHgvetFulQ-McPyqhCsPjtBtHl');
+  const [siteKey, setSiteKey] = useState<string>('6Lc8-vwqAAAAAM6pSulL7ReN7X2tG1sIBoG-YCjC');
   const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   useEffect(() => {

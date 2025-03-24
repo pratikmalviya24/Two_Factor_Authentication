@@ -47,7 +47,7 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string>('');
   // Use Google's special test key for development
-  const [siteKey, setSiteKey] = useState<string>('6LeY4_oqAAAAAAbHgvetFulQ-McPyqhCsPjtBtHl');
+  const [siteKey, setSiteKey] = useState<string>('6Lc8-vwqAAAAAM6pSulL7ReN7X2tG1sIBoG-YCjC');
   const recaptchaRef = useRef<ReCAPTCHA>(null);
   const navigate = useNavigate();
   const location = useLocation();
