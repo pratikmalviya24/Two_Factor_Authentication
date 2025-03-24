@@ -112,6 +112,7 @@ const TwoFactorVerification: React.FC = () => {
         handleSetupAuthenticatorApp();
       } else {
         // For other setup flows, still show method selection
+        // BUT show only APP method during registration
         setShowMethodSelection(true);
       }
     } else {
@@ -331,6 +332,7 @@ const TwoFactorVerification: React.FC = () => {
   const renderMethodSelection = () => {
     // Check if the user is coming from the profile page
     const isFromProfile = location.state?.fromProfile === true;
+    const isLoginFlow = !isSetupMode && location.state?.loginFlow === true;
     
     return (
     <Fade in={showMethodSelection} timeout={800}>
@@ -343,7 +345,7 @@ const TwoFactorVerification: React.FC = () => {
             WebkitTextFillColor: 'transparent',
           }}
         >
-          {isSetupMode ? 'Choose Your 2FA Method' : 'Verify Your Identity'}
+          {isSetupMode ? 'Setup Your 2FA Method' : 'Verify Your Identity'}
         </Typography>
         
         <Typography variant="body1" textAlign="center" mb={4} color="text.secondary" 
@@ -354,349 +356,98 @@ const TwoFactorVerification: React.FC = () => {
             : 'Please select a verification method to continue.'}
         </Typography>
         
-        <Grid container spacing={4} justifyContent="center">
-          <Grid item xs={12} sm={isFromProfile ? 12 : 6} md={isFromProfile ? 8 : 5}>
-            <Grow in={true} timeout={800} style={{ transformOrigin: '50% 0%' }}>
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          {/* Always show Authenticator App option */}
+          <Grid item xs={12} md={isLoginFlow ? 6 : 12}>
+            <Card 
+              sx={{
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                border: '1px solid',
+                borderColor: alpha(theme.palette.primary.main, 0.2),
+                borderRadius: 2,
+                overflow: 'hidden',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: theme.shadows[8],
+                  borderColor: alpha(theme.palette.primary.main, 0.5),
+                },
+              }}
+              onClick={() => handleMethodSelect('APP')}
+            >
+              <CardContent sx={{ p: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                  <Box 
+                    sx={{ 
+                      mr: 1.5, 
+                      bgcolor: alpha(theme.palette.primary.main, 0.1),
+                      p: 1,
+                      borderRadius: '50%',
+                    }}
+                  >
+                    <PhoneAndroid 
+                      sx={{ 
+                        color: theme.palette.primary.main,
+                        fontSize: 28
+                      }} 
+                    />
+                  </Box>
+                  <Typography variant="h6" fontWeight={600}>
+                    Authenticator App
+                  </Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary">
+                  Use Google Authenticator, Microsoft Authenticator, Authy, or any other compatible TOTP app
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          {/* Show Email option only for login flow, not for registration or initial setup */}
+          {isLoginFlow && (
+            <Grid item xs={12} md={6}>
               <Card 
-                elevation={4}
-                onClick={() => handleMethodSelect('APP')}
                 sx={{
                   cursor: 'pointer',
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
                   transition: 'all 0.3s ease',
-                  borderRadius: 3,
+                  border: '1px solid',
+                  borderColor: alpha(theme.palette.info.main, 0.2),
+                  borderRadius: 2,
                   overflow: 'hidden',
-                  border: '2px solid transparent',
-                  maxWidth: isFromProfile ? '450px' : 'none',
-                  mx: isFromProfile ? 'auto' : 0,
-                  position: 'relative',
                   '&:hover': {
-                    transform: 'translateY(-8px)',
-                    boxShadow: '0 12px 28px rgba(0,0,0,0.15)',
-                    borderColor: alpha(theme.palette.primary.main, 0.3),
-                    '& .hover-shine': {
-                      transform: 'translateX(100%)',
-                    }
-                  }
+                    transform: 'translateY(-4px)',
+                    boxShadow: theme.shadows[8],
+                    borderColor: alpha(theme.palette.info.main, 0.5),
+                  },
                 }}
+                onClick={() => handleMethodSelect('EMAIL')}
               >
-                {/* Shine effect on hover */}
-                <Box 
-                  className="hover-shine"
-                  sx={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    background: 'linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%)',
-                    transform: 'translateX(-100%)',
-                    transition: 'transform 0.6s ease',
-                    zIndex: 5,
-                    pointerEvents: 'none',
-                  }}
-                />
-                
-                <Box 
-                  sx={{
-                    background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.dark, 0.2)} 100%)`,
-                    p: 3,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    position: 'relative',
-                    overflow: 'hidden',
-                  }}
-                >
-                  {/* Decorative circles */}
-                  <Box sx={{
-                    position: 'absolute',
-                    width: '120px',
-                    height: '120px',
-                    borderRadius: '50%',
-                    background: alpha(theme.palette.primary.main, 0.1),
-                    top: '-60px',
-                    right: '-60px',
-                  }} />
-                  
-                  <Box sx={{
-                    position: 'absolute',
-                    width: '80px',
-                    height: '80px',
-                    borderRadius: '50%',
-                    background: alpha(theme.palette.primary.main, 0.1),
-                    bottom: '-20px',
-                    left: '30px',
-                  }} />
-                  
-                  <Avatar 
-                    sx={{ 
-                      width: 90, 
-                      height: 90, 
-                      bgcolor: alpha(theme.palette.primary.main, 0.9),
-                      color: 'white',
-                      boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-                      border: '4px solid white',
-                      zIndex: 2,
-                    }}
-                  >
-                    <SmartToy sx={{ fontSize: 40 }} />
-                  </Avatar>
-                </Box>
-                <CardContent sx={{ flexGrow: 1, textAlign: 'center', px: 3, py: 4 }}>
-                  <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
-                    <AppShortcut color="primary" sx={{ fontSize: 24 }} />
-                    <Typography variant="h6" fontWeight="bold">
-                      Authenticator App
-                    </Typography>
-                  </Box>
-                  
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Use Google Authenticator, Authy, or another TOTP app to generate verification codes.
-                  </Typography>
-                  
-                  <Box 
-                    sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      gap: 2,
-                      mb: 2, 
-                      p: 1.5,
-                      borderRadius: 2,
-                      bgcolor: alpha(theme.palette.primary.main, 0.05),
-                    }}
-                  >
-                    <Tooltip title="Secure" placement="top">
-                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <HttpsOutlined sx={{ color: theme.palette.success.main, fontSize: 20 }} />
-                        <Typography variant="caption" color="success.main" fontWeight="medium">
-                          Secure
-                        </Typography>
-                      </Box>
-                    </Tooltip>
-
-                    <Divider orientation="vertical" flexItem sx={{ height: 30 }} />
-
-                    <Tooltip title="Works offline" placement="top">
-                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <Key sx={{ color: theme.palette.primary.main, fontSize: 20 }} />
-                        <Typography variant="caption" color="primary" fontWeight="medium">
-                          Offline
-                        </Typography>
-                      </Box>
-                    </Tooltip>
-
-                    <Divider orientation="vertical" flexItem sx={{ height: 30 }} />
-
-                    <Tooltip title="Easy to use" placement="top">
-                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <VerifiedUser sx={{ color: theme.palette.info.main, fontSize: 20 }} />
-                        <Typography variant="caption" color="info.main" fontWeight="medium">
-                          Easy
-                        </Typography>
-                      </Box>
-                    </Tooltip>
-                  </Box>
-                </CardContent>
-                <CardActions sx={{ justifyContent: 'center', pb: 3 }}>
-                  <Button 
-                    variant="contained" 
-                    color="primary"
-                    size="large"
-                    disableElevation
-                    endIcon={<ArrowForward />}
-                    sx={{ 
-                      borderRadius: 8,
-                      px: 4,
-                      py: 1.2,
-                      textTransform: 'none',
-                      fontWeight: 'bold',
-                      background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                      boxShadow: '0 4px 12px rgba(63,81,181,0.4)',
-                      '&:hover': {
-                        boxShadow: '0 6px 16px rgba(63,81,181,0.6)',
-                      },
-                    }}
-                  >
-                    {isSetupMode ? 'Set Up App' : 'Use App'}
-                  </Button>
-                </CardActions>
-              </Card>
-            </Grow>
-          </Grid>
-
-          {/* Only show the EMAIL option if not coming from profile page */}
-          {!isFromProfile && (
-            <Grid item xs={12} sm={6} md={5}>
-              <Grow in={true} timeout={800} style={{ transformOrigin: '50% 0%', transitionDelay: '100ms' }}>
-                <Card 
-                  elevation={4}
-                  onClick={() => handleMethodSelect('EMAIL')}
-                  sx={{
-                    cursor: 'pointer',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    transition: 'all 0.3s ease',
-                    borderRadius: 3,
-                    overflow: 'hidden',
-                    border: '2px solid transparent',
-                    position: 'relative',
-                    '&:hover': {
-                      transform: 'translateY(-8px)',
-                      boxShadow: '0 12px 28px rgba(0,0,0,0.15)',
-                      borderColor: alpha(theme.palette.primary.main, 0.3),
-                      '& .hover-shine': {
-                        transform: 'translateX(100%)',
-                      }
-                    }
-                  }}
-                >
-                  {/* Shine effect on hover */}
-                  <Box 
-                    className="hover-shine"
-                    sx={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      background: 'linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%)',
-                      transform: 'translateX(-100%)',
-                      transition: 'transform 0.6s ease',
-                      zIndex: 5,
-                      pointerEvents: 'none',
-                    }}
-                  />
-                  
-                  <Box 
-                    sx={{
-                      background: `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.dark, 0.2)} 100%)`,
-                      p: 3,
-                      display: 'flex',
-                      justifyContent: 'center',
-                      position: 'relative',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {/* Decorative circles */}
-                    <Box sx={{
-                      position: 'absolute',
-                      width: '120px',
-                      height: '120px',
-                      borderRadius: '50%',
-                      background: alpha(theme.palette.info.main, 0.1),
-                      top: '-60px',
-                      right: '-60px',
-                    }} />
-                    
-                    <Box sx={{
-                      position: 'absolute',
-                      width: '80px',
-                      height: '80px',
-                      borderRadius: '50%',
-                      background: alpha(theme.palette.info.main, 0.1),
-                      bottom: '-20px',
-                      left: '30px',
-                    }} />
-                    
-                    <Avatar 
-                      sx={{ 
-                        width: 90, 
-                        height: 90, 
-                        bgcolor: alpha(theme.palette.info.main, 0.9),
-                        color: 'white',
-                        boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-                        border: '4px solid white',
-                        zIndex: 2,
-                      }}
-                    >
-                      <Email sx={{ fontSize: 40 }} />
-                    </Avatar>
-                  </Box>
-                  <CardContent sx={{ flexGrow: 1, textAlign: 'center', px: 3, py: 4 }}>
-                    <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
-                      <MarkEmailRead color="info" sx={{ fontSize: 24 }} />
-                      <Typography variant="h6" fontWeight="bold">
-                        Email Verification
-                      </Typography>
-                    </Box>
-                    
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      Receive a verification code via email when you sign in to your account.
-                    </Typography>
-                    
+                <CardContent sx={{ p: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
                     <Box 
                       sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        gap: 2,
-                        mb: 2, 
-                        p: 1.5,
-                        borderRadius: 2,
-                        bgcolor: alpha(theme.palette.info.main, 0.05),
+                        mr: 1.5, 
+                        bgcolor: alpha(theme.palette.info.main, 0.1),
+                        p: 1,
+                        borderRadius: '50%',
                       }}
                     >
-                      <Tooltip title="No app needed" placement="top">
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <AppShortcut sx={{ color: theme.palette.success.main, fontSize: 20 }} />
-                          <Typography variant="caption" color="success.main" fontWeight="medium">
-                            No App
-                          </Typography>
-                        </Box>
-                      </Tooltip>
-
-                      <Divider orientation="vertical" flexItem sx={{ height: 30 }} />
-
-                      <Tooltip title="Convenient" placement="top">
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <CheckCircle sx={{ color: theme.palette.info.main, fontSize: 20 }} />
-                          <Typography variant="caption" color="info.main" fontWeight="medium">
-                            Easy
-                          </Typography>
-                        </Box>
-                      </Tooltip>
-
-                      <Divider orientation="vertical" flexItem sx={{ height: 30 }} />
-
-                      <Tooltip title="Email Access Required" placement="top">
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <MarkEmailRead sx={{ color: theme.palette.primary.main, fontSize: 20 }} />
-                          <Typography variant="caption" color="primary" fontWeight="medium">
-                            Email
-                          </Typography>
-                        </Box>
-                      </Tooltip>
+                      <Email 
+                        sx={{ 
+                          color: theme.palette.info.main,
+                          fontSize: 28
+                        }} 
+                      />
                     </Box>
-                  </CardContent>
-                  <CardActions sx={{ justifyContent: 'center', pb: 3 }}>
-                    <Button 
-                      variant="contained" 
-                      color="info"
-                      size="large"
-                      disableElevation
-                      endIcon={<ArrowForward />}
-                      sx={{ 
-                        borderRadius: 8,
-                        px: 4,
-                        py: 1.2,
-                        textTransform: 'none',
-                        fontWeight: 'bold',
-                        background: `linear-gradient(90deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`,
-                        boxShadow: '0 4px 12px rgba(33,150,243,0.4)',
-                        '&:hover': {
-                          boxShadow: '0 6px 16px rgba(33,150,243,0.6)',
-                        },
-                      }}
-                    >
-                      {isSetupMode ? 'Set Up Email' : 'Use Email'}
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grow>
+                    <Typography variant="h6" fontWeight={600}>
+                      Email Code
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Receive a verification code via email to your registered address
+                  </Typography>
+                </CardContent>
+              </Card>
             </Grid>
           )}
         </Grid>
@@ -823,7 +574,7 @@ const TwoFactorVerification: React.FC = () => {
               </Box>
                 
               <Typography variant="caption" color="text.secondary" mt={1.5} textAlign="center">
-                Can't scan? Use this key:
+                username :
               </Typography>
               <Typography 
                 variant="caption" 
