@@ -455,53 +455,17 @@ The Two-Factor Authentication system features a clean, modern UI that prioritize
 #### Login Screen
 ![Login UI](diagrams/login-screen.png)
 
-The login screen features:
-- Simple, focused layout with prominent input fields
-- Clear visual hierarchy guiding users through the login process
-- Visually distinct "Sign In" button with appropriate prominence
-- Password visibility toggle for better usability
-- reCAPTCHA integration for security
-- Helpful links for account creation and password recovery
-- Clean, distraction-free design that focuses on the authentication task
-
 #### Two-Factor Authentication Method Selection
 ![2FA Method Selection](diagrams/2fa-method-selection.png)
 
-The 2FA method selection screen includes:
-- Clear heading indicating the verification purpose
-- Visual representation of different authentication methods
-- Informative descriptions explaining each method's benefits
-- Method cards with distinct visual cues and status indicators
-- Simplified action buttons for quick method selection
-- Feature comparison through intuitive icons and labels
-- Responsive design that adapts to different screen sizes
-
 #### Account Creation Flow
 ![Security Settings](diagrams/security-settings.png)
-
-The registration process features:
-- Multi-step approach breaking down the registration into manageable segments
-- Progress indicator showing current step in the process
-- Visual cues for password requirements
-- Consistent input styling with appropriate validation feedback
-- Form fields with descriptive labels and placeholder text
-- Clear separation between account information and security setup
-- Responsive design accommodating various screen sizes
 
 ### User Profile and Security Management
 
 #### Security Settings Panel
 ![Account Creation](diagrams/account-creation.png)
 
-
-The security settings interface provides:
-- Clearly organized security options in visually distinct cards
-- Two-Factor Authentication status with visual indicators
-- Actionable buttons for security feature management
-- Color-coded sections (green for active, blue for information, red for danger)
-- Confirmation indicators for enabled security features
-- Clear explanatory text for each security option
-- Visually distinct "danger zone" for account deletion
 
 #### Two-Factor Authentication Setup
 ![2FA Setup UI](diagrams/2fa-setup.png)
@@ -622,7 +586,6 @@ The following diagram illustrates the security threat model, highlighting potent
 
 #### Threat Mitigation Strategies
 1. **Brute Force Prevention**:
-   - Implement account lockout after multiple failed attempts
    - Rate limiting on authentication endpoints
    - CAPTCHA for suspicious login attempts
 
