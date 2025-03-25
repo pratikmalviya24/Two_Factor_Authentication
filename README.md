@@ -547,11 +547,11 @@ The application will be accessible at `http://localhost:3000` with the API runni
 
 Security is a critical aspect of any authentication system. This section outlines the security considerations, potential threats, and implemented countermeasures in the Two-Factor Authentication system.
 
-### Security Threat Model
+<!-- ### Security Threat Model
 
 The following diagram illustrates the security threat model, highlighting potential attack vectors and corresponding security controls:
 
-![Security Threat Model](diagrams/SecurityThreatModel.png)
+![Security Threat Model](diagrams/SecurityThreatModel.png) -->
 
 ### Key Security Considerations
 
