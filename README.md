@@ -11,8 +11,7 @@
 8. [Data Flow Analysis](#data-flow-analysis)
 9. [User Interface Design](#user-interface-design)
 10. [Security Considerations](#security-considerations)
-11. [Team Contributions](#team-contributions)
-12. [Setup Instructions](#setup-instructions)
+11. [Setup Instructions](#setup-instructions)
 
 ## Project Overview
 
@@ -513,29 +512,7 @@ The application implements several security best practices:
 - **XSS Protection**: React's built-in protection and proper output encoding
 - **CSRF Protection**: Token-based protection for state-changing operations
 
-## Team Contributions
 
-### Member Contributions:
-
-- **Team Member 1**:
-  - Backend API development
-  - Security implementation (JWT, 2FA)
-  - Database design and implementation
-  
-- **Team Member 2**:
-  - Frontend architecture
-  - UI component development
-  - React state management
-  
-- **Team Member 3**:
-  - Integration testing
-  - Email service implementation
-  - DevOps setup (Docker configuration)
-  
-- **Team Member 4**:
-  - UI/UX design
-  - Documentation
-  - QA testing
 
 ## Setup Instructions
 
@@ -583,49 +560,3 @@ The following diagram illustrates the security threat model, highlighting potent
 - **2FA Secret Keys**: Encrypted at rest and never exposed in plaintext to users
 - **Authentication Tokens**: Short-lived JWTs with proper expiry and refresh mechanisms
 - **Personal Data**: Protected through input validation and least privilege access
-
-#### Threat Mitigation Strategies
-1. **Brute Force Prevention**:
-   - Rate limiting on authentication endpoints
-   - CAPTCHA for suspicious login attempts
-
-2. **MITM Attack Prevention**:
-   - TLS/SSL for all communications
-   - HTTP Strict Transport Security (HSTS)
-   - Certificate pinning for mobile applications
-
-3. **XSS/CSRF Protection**:
-   - Input validation on all user-supplied data
-   - Content Security Policy (CSP) implementation
-   - Anti-CSRF tokens for state-changing operations
-   - HttpOnly and Secure cookie flags
-
-4. **Injection Prevention**:
-   - Parameterized queries and prepared statements
-   - ORM framework with proper escaping
-   - Input sanitization and validation
-
-5. **Session Security**:
-   - Short-lived JWT tokens with proper validation
-   - Secure token storage practices
-   - Ability to invalidate sessions remotely
-
-6. **Two-Factor Authentication**:
-   - TOTP implementation following RFC 6238
-   - Secret key generation using secure random functions
-   - Rate limiting for verification attempts
-   - Fallback mechanisms and recovery options
-
-7. **Privacy Considerations**:
-   - Data minimization principles
-   - Proper user consent collection
-   - Clear privacy policy communication
-   - Data retention policies
-
-### Security Testing Approach
-- Regular vulnerability scanning and penetration testing
-- Static code analysis to identify security issues
-- Dependency vulnerability checking
-- Security code reviews
-
-This comprehensive security approach ensures that the Two-Factor Authentication system provides robust protection against common authentication vulnerabilities while maintaining usability for legitimate users.
